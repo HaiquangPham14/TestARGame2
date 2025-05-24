@@ -47,16 +47,65 @@
         var canvas = document.querySelector("#unity-canvas");
         var mediaRecorder;
         var recordedChunks = [];
-        var audioContext;
-        var mediaStreamDestination;
 
-        async function initializeAudioCapture() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            mediaStreamDestination = audioContext.createMediaStreamDestination();
+        // --- AudioContext patch for Unity WebGL ---
+        // These variables will hold the context and destination node
+        let unityAudioContext = null;
+        let unityMediaDestination = null;
 
-            console.log("Audio capture initialized");
+        // Function to be called when we find Unity's AudioContext
+        function setupUnityAudioCapture(ctx) {
+            if (!ctx) return;
+            unityAudioContext = ctx;
+            unityMediaDestination = unityAudioContext.createMediaStreamDestination();
+            // Patch AudioContext's destination to also output to our destination (if not already connected)
+            try {
+                unityAudioContext.destination.connect(unityMediaDestination);
+            } catch (e) {
+                // Already connected or not possible
+            }
+            // You may log for debug:
+            // console.log('Unity AudioContext patched for recording');
         }
-        initializeAudioCapture();
+
+        // Try to hook into Unity's AudioContext after Unity loads
+        // This assumes createUnityInstance is available globally
+        // (If you're using a custom loader, ensure this part runs after Unity instance is created)
+        function tryFindUnityAudioContext() {
+            // Some Unity builds expose it as window.UnityAudio.context
+            if (window.UnityAudio && window.UnityAudio.context) {
+                setupUnityAudioCapture(window.UnityAudio.context);
+                return true;
+            }
+            // Try to detect via any global AudioContext that exists
+            if (window.AudioContext || window.webkitAudioContext) {
+                // Look for a context with a property that looks like Unity's
+                for (let key in window) {
+                    if (
+                        window[key] &&
+                        window[key] instanceof (window.AudioContext || window.webkitAudioContext) &&
+                        window[key].destination &&
+                        window[key].destination.maxChannelCount
+                    ) {
+                        setupUnityAudioCapture(window[key]);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Poll for Unity AudioContext for a few seconds after Unity loads
+        function pollUnityAudioContext() {
+            let attempts = 0;
+            let interval = setInterval(() => {
+                if (tryFindUnityAudioContext()) {
+                    clearInterval(interval);
+                } else if (++attempts > 40) { // ~8 seconds
+                    clearInterval(interval);
+                }
+            }, 200);
+        }
 
         document.querySelector("#capture-button").onclick = function () {
             requestAnimationFrame(() => {
@@ -67,25 +116,36 @@
             });
         };
 
-        // Record video with audio
+        // Record video with Unity audio
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
             const canvasStream = canvas.captureStream(30); // 30 fps
 
-            // Kết hợp âm thanh từ MediaStreamDestination
-            if (mediaStreamDestination && mediaStreamDestination.stream) {
-                const audioTracks = mediaStreamDestination.stream.getAudioTracks();
-                audioTracks.forEach(track => canvasStream.addTrack(track));
+            // Add Unity's audio track if possible
+            if (unityMediaDestination && unityMediaDestination.stream) {
+                var audioTracks = unityMediaDestination.stream.getAudioTracks();
+                audioTracks.forEach(track => {
+                    canvasStream.addTrack(track);
+                });
             }
 
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' });
+            // Use video/mp4;codecs=vp9,opus for better compatibility
+            let mimeType = 'video/mp4;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/mp4;codecs=vp8,opus';
+            }
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/mp4';
+            }
+
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType });
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
                 }
             };
             mediaRecorder.onstop = function() {
-                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                const blob = new Blob(recordedChunks, { type: mimeType });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = `recording-${Date.now()}.mp4`;
@@ -97,7 +157,9 @@
         };
 
         document.querySelector("#stop-button").onclick = function() {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
             document.querySelector("#stop-button").style.display = 'none';
             document.querySelector("#record-button").style.display = 'inline';
         };
@@ -159,6 +221,8 @@
                 document.querySelector("#unity-fullscreen-button").onclick = () => {
                     unityInstance.SetFullscreen(1);
                 };
+                // Start polling for AudioContext after Unity loads
+                pollUnityAudioContext();
             }).catch((message) => {
                 alert(message);
             });
