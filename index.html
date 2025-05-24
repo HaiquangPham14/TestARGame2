@@ -49,23 +49,11 @@
         var recordedChunks = [];
 
         document.querySelector("#capture-button").onclick = function() {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataUrl = canvas.toDataURL('image/png');
-            saveFile(dataURLtoBlob(dataUrl), `Photo${generateRandomNumber()}.png`);
-        };
-        function generateRandomNumber() {
-            return Math.floor(Math.random() * 10000); 
-        }
-        function saveFile(blob, filename) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
+            var link = document.createElement('a');
+            link.download = 'screenshot.png';
+            link.href = canvas.toDataURL('image/png');
             link.click();
-        }
+        };
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(canvas.captureStream());
