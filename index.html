@@ -23,9 +23,47 @@
         <div id="unity-build-title">WebAR Sapporo</div>
       </div>
     </div>
+    <div id="controls">
+        <button id="capture-button">Chụp Ảnh</button>
+        <button id="record-button">Bắt Đầu Quay</button>
+        <button id="stop-button" style="display: none;">Dừng Quay</button>
+    </div>
     <script>
       var canvas = document.querySelector("#unity-canvas");
+      var mediaRecorder;
+        var recordedChunks = [];
 
+        document.querySelector("#capture-button").onclick = function() {
+            var link = document.createElement('a');
+            link.download = 'screenshot.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+      document.querySelector("#record-button").onclick = function() {
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(canvas.captureStream());
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                var blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'recording.mp4';
+                link.click();
+            };
+            mediaRecorder.start();
+            document.querySelector("#record-button").style.display = 'none';
+            document.querySelector("#stop-button").style.display = 'inline';
+        };
+
+        document.querySelector("#stop-button").onclick = function() {
+            mediaRecorder.stop();
+            document.querySelector("#stop-button").style.display = 'none';
+            document.querySelector("#record-button").style.display = 'inline';
+        };
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
       // If type=='warning', a yellow highlight color is used.
