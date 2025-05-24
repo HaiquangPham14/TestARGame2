@@ -38,6 +38,7 @@
             <div id="unity-build-title">WebAR Sapporo</div>
         </div>
     </div>
+    <video id="ar-video" style="display:none; position:absolute; left:0; top:0;" controls crossorigin="anonymous"></video>
     <div id="controls">
         <button id="capture-button">Chụp Ảnh</button>
         <button id="record-button">Bắt Đầu Quay</button>
@@ -45,93 +46,18 @@
     </div>
     <script>
         var canvas = document.querySelector("#unity-canvas");
+        var arVideo = document.getElementById("ar-video");
         var mediaRecorder;
         var recordedChunks = [];
 
-        // --- AudioContext patch for Unity WebGL ---
-        let unityAudioContext = null;
-        let unityMediaDestination = null;
-        let unityInstance = null; // To store the Unity instance
-
-        // Function to set up audio capture
-        function setupUnityAudioCapture(ctx) {
-            if (!ctx) return;
-            unityAudioContext = ctx;
-            unityMediaDestination = unityAudioContext.createMediaStreamDestination();
-            try {
-                // Redirect Unity's audio output to our destination
-                unityAudioContext.destination.connect(unityMediaDestination);
-                console.log("Unity AudioContext patched for recording");
-            } catch (e) {
-                console.warn("Could not connect to Unity AudioContext destination:", e);
-            }
+        // Cập nhật source video và play khi detect đúng ảnh (Unity gọi hàm này)
+        // Ví dụ: unityInstance.SendMessage("JSBridge", "PlayARVideo", "video.mp4");
+        window.PlayARVideo = function(src) {
+            arVideo.src = src;
+            arVideo.style.display = "block";
+            arVideo.play();
         }
 
-        // Enhanced function to find Unity's AudioContext
-        function tryFindUnityAudioContext() {
-            // Check if Unity exposes its audio context
-            if (window.UnityAudio && window.UnityAudio.context) {
-                setupUnityAudioCapture(window.UnityAudio.context);
-                return true;
-            }
-            // Check for global AudioContext instances
-            if (window.AudioContext || window.webkitAudioContext) {
-                for (let key in window) {
-                    try {
-                        let ctx = window[key];
-                        if (
-                            ctx instanceof (window.AudioContext || window.webkitAudioContext) &&
-                            ctx.destination && // Ensure it's an AudioContext with a destination
-                            ctx.state !== "suspended" // Ensure it's active
-                        ) {
-                            // Additional heuristic: Unity often has a specific structure
-                            if (
-                                ctx.currentTime > 0 || // Unity's context often has a non-zero currentTime
-                                (ctx.createBufferSource && ctx.createGain) // Unity uses these nodes
-                            ) {
-                                setupUnityAudioCapture(ctx);
-                                return true;
-                            }
-                        }
-                    } catch (e) {
-                        // Skip any errors from accessing properties
-                    }
-                }
-            }
-            return false;
-        }
-
-        // Poll for Unity AudioContext after Unity loads
-        function pollUnityAudioContext() {
-            let attempts = 0;
-            let interval = setInterval(() => {
-                if (tryFindUnityAudioContext()) {
-                    clearInterval(interval);
-                } else if (++attempts > 50) { // ~10 seconds
-                    clearInterval(interval);
-                    console.warn("Could not find Unity AudioContext. Falling back to system audio capture.");
-                    // Fallback to system audio capture
-                    useSystemAudioCapture();
-                }
-            }, 200);
-        }
-
-        // Fallback to system audio capture using getDisplayMedia
-        let displayStream = null;
-        async function useSystemAudioCapture() {
-            try {
-                displayStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                    audio: true // Attempt to capture system audio
-                });
-                console.log("System audio capture enabled via getDisplayMedia");
-            } catch (e) {
-                console.error("Failed to capture system audio:", e);
-                alert("Không thể ghi âm thanh hệ thống: " + e.message);
-            }
-        }
-
-        // Capture photo
         document.querySelector("#capture-button").onclick = function () {
             requestAnimationFrame(() => {
                 var link = document.createElement('a');
@@ -141,46 +67,26 @@
             });
         };
 
-        // Record video with audio
-        document.querySelector("#record-button").onclick = async function() {
+        // Record video với cả âm thanh từ thẻ video AR (nếu đang phát)
+        document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
+            const canvasStream = canvas.captureStream(30); // 30 fps
 
-            let canvasStream = canvas.captureStream(30); // 30 fps
-
-            // Try to add Unity's audio track if available
-            if (unityMediaDestination && unityMediaDestination.stream) {
-                const audioTracks = unityMediaDestination.stream.getAudioTracks();
-                if (audioTracks.length > 0) {
-                    audioTracks.forEach(track => canvasStream.addTrack(track));
-                    console.log("Unity audio tracks added to recording");
-                } else {
-                    console.log("No Unity audio tracks available");
-                }
+            // Nếu video AR đang phát, lấy audio track từ nó và add vào stream
+            if (!arVideo.paused && !arVideo.ended && arVideo.readyState > 2) {
+                let videoStream = arVideo.captureStream();
+                let audioTracks = videoStream.getAudioTracks();
+                audioTracks.forEach(track => {
+                    canvasStream.addTrack(track);
+                });
             }
 
-            // If we have a display stream (system audio), use it instead
-            let finalStream = canvasStream;
-            if (displayStream) {
-                finalStream = new MediaStream();
-                // Add video from display stream
-                displayStream.getVideoTracks().forEach(track => finalStream.addTrack(track));
-                // Add audio from display stream (system audio)
-                const audioTracks = displayStream.getAudioTracks();
-                if (audioTracks.length > 0) {
-                    audioTracks.forEach(track => finalStream.addTrack(track));
-                    console.log("System audio tracks added to recording");
-                } else {
-                    console.log("No system audio tracks available");
-                }
-            }
+            // Nếu không có audio, vẫn record hình
+            let mimeType = 'video/webm;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
 
-            // Use video/mp4 for better compatibility
-            let mimeType = 'video/mp4;codecs=vp8,opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'video/mp4';
-            }
-
-            mediaRecorder = new MediaRecorder(finalStream, { mimeType: mimeType });
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType });
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
@@ -190,13 +96,8 @@
                 const blob = new Blob(recordedChunks, { type: mimeType });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.mp4`;
+                link.download = `recording-${Date.now()}.webm`;
                 link.click();
-                // Stop display stream tracks if used
-                if (displayStream) {
-                    displayStream.getTracks().forEach(track => track.stop());
-                    displayStream = null;
-                }
             };
             mediaRecorder.start();
             document.querySelector("#record-button").style.display = 'none';
