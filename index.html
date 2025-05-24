@@ -56,24 +56,42 @@
                 link.click();
             });
         };
-        document.querySelector("#record-button").onclick = function() {
-            recordedChunks = [];
-            mediaRecorder = new MediaRecorder(canvas.captureStream());
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-            mediaRecorder.onstop = function() {
-                var blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                var link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'recording.mp4';
-                link.click();
-            };
-            mediaRecorder.start();
-            document.querySelector("#record-button").style.display = 'none';
-            document.querySelector("#stop-button").style.display = 'inline';
+        document.querySelector("#record-button").onclick = async function () {
+            try {
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { frameRate: 30 },
+                    audio: true // ghi cả âm thanh trong tab (bao gồm Unity WebGL)
+                });
+        
+                recordedChunks = [];
+        
+                mediaRecorder = new MediaRecorder(displayStream, {
+                    mimeType: "video/mp4; codecs=vp9"
+                });
+        
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+        
+                mediaRecorder.onstop = function() {
+                    var blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                    var link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'recording.mp4';
+                    link.click();
+                };
+        
+                mediaRecorder.start();
+        
+                document.querySelector("#record-button").style.display = 'none';
+                document.querySelector("#stop-button").style.display = 'inline';
+        
+            } catch (err) {
+                console.error("Recording failed: ", err);
+                alert("Trình duyệt không cho phép quay màn hình hoặc âm thanh.");
+            }
         };
 
         document.querySelector("#stop-button").onclick = function() {
