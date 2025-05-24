@@ -55,10 +55,11 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 mediaStreamDestination = audioContext.createMediaStreamDestination();
 
+                // Get audio from microphone
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const microphone = audioContext.createMediaStreamSource(stream);
                 microphone.connect(mediaStreamDestination);
-                
+
                 console.log("Audio capture initialized");
             } catch (error) {
                 console.error("Error initializing audio capture:", error);
@@ -84,26 +85,23 @@
             recordedChunks = [];
             const canvasStream = canvas.captureStream(30); // 30 fps
 
-            // Add audio tracks from both Unity and microphone
+            // Combine audio from Unity and microphone
             if (mediaStreamDestination && mediaStreamDestination.stream) {
                 const audioTracks = mediaStreamDestination.stream.getAudioTracks();
                 audioTracks.forEach(track => canvasStream.addTrack(track));
-                console.log("Audio tracks added to recording");
-            } else {
-                console.log("No audio tracks available");
             }
 
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' }); // Use WebM for better compatibility
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' }); // Use WebM for better compatibility
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
                 }
             };
             mediaRecorder.onstop = function() {
-                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.mp4`;
+                link.download = `recording-${Date.now()}.webm`;
                 link.click();
             };
             mediaRecorder.start();
