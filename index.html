@@ -82,9 +82,9 @@
             }
 
             // Nếu không có audio, vẫn record hình
-            let mimeType = 'video/webm;codecs=vp9,opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm;codecs=vp8,opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+            let mimeType = 'video/mp4;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4;codecs=vp8,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
 
             mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType });
             mediaRecorder.ondataavailable = function(event) {
@@ -96,7 +96,7 @@
                 const blob = new Blob(recordedChunks, { type: mimeType });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.webm`;
+                link.download = `recording-${Date.now()}.mp4`;
                 link.click();
             };
             mediaRecorder.start();
