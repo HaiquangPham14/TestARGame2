@@ -57,8 +57,6 @@
             });
         };
         document.querySelector("#record-button").onclick = async function () {
-            try {
-                // Bước yêu cầu quyền micro (giúp unlock capture audio)
                 await navigator.mediaDevices.getUserMedia({ audio: true });
         
                 const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -90,11 +88,6 @@
         
                 document.querySelector("#record-button").style.display = 'none';
                 document.querySelector("#stop-button").style.display = 'inline';
-        
-            } catch (err) {
-                console.error("Không thể quay video:", err);
-                alert("Trình duyệt không cho phép ghi màn hình hoặc âm thanh. Hãy chắc chắn bạn đang chạy trên localhost hoặc HTTPS.");
-            }
         };
         
         document.querySelector("#stop-button").onclick = function() {
