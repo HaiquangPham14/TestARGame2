@@ -58,14 +58,17 @@
         };
         document.querySelector("#record-button").onclick = async function () {
             try {
-                const displayStream = await navigator.mediaDevices.getDisplayMedia({
+                // Bước yêu cầu quyền micro (giúp unlock capture audio)
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+                const stream = await navigator.mediaDevices.getDisplayMedia({
                     video: { frameRate: 30 },
-                    audio: true // ghi cả âm thanh trong tab (bao gồm Unity WebGL)
+                    audio: true 
                 });
         
                 recordedChunks = [];
         
-                mediaRecorder = new MediaRecorder(displayStream, {
+                mediaRecorder = new MediaRecorder(stream, {
                     mimeType: "video/mp4; codecs=vp9"
                 });
         
@@ -89,11 +92,11 @@
                 document.querySelector("#stop-button").style.display = 'inline';
         
             } catch (err) {
-                console.error("Recording failed: ", err);
-                alert("Trình duyệt không cho phép quay màn hình hoặc âm thanh.");
+                console.error("Không thể quay video:", err);
+                alert("Trình duyệt không cho phép ghi màn hình hoặc âm thanh. Hãy chắc chắn bạn đang chạy trên localhost hoặc HTTPS.");
             }
         };
-
+        
         document.querySelector("#stop-button").onclick = function() {
             mediaRecorder.stop();
             document.querySelector("#stop-button").style.display = 'none';
