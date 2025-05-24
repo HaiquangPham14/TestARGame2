@@ -174,10 +174,10 @@
                 }
             }
 
-            // Use video/webm for better compatibility
-            let mimeType = 'video/webm;codecs=vp8,opus';
+            // Use video/mp4 for better compatibility
+            let mimeType = 'video/mp4;codecs=vp8,opus';
             if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'video/webm';
+                mimeType = 'video/mp4';
             }
 
             mediaRecorder = new MediaRecorder(finalStream, { mimeType: mimeType });
@@ -190,7 +190,7 @@
                 const blob = new Blob(recordedChunks, { type: mimeType });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.webm`;
+                link.download = `recording-${Date.now()}.mp4`;
                 link.click();
                 // Stop display stream tracks if used
                 if (displayStream) {
