@@ -48,11 +48,13 @@
         var mediaRecorder;
         var recordedChunks = [];
 
-        document.querySelector("#capture-button").onclick = function() {
-            var link = document.createElement('a');
-            link.download = 'screenshot.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        document.querySelector("#capture-button").onclick = function () {
+            requestAnimationFrame(() => {
+                var link = document.createElement('a');
+                link.download = 'screenshot.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
         };
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
