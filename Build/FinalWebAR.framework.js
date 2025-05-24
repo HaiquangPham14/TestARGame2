@@ -339,11 +339,7 @@ Module["MindARImage"] = {
     //navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: FacingModes[this.facingMode]}})
     return new Promise((resolve) => {
       navigator.mediaDevices.getUserMedia({audio: false, video: {
-        facingMode: (this.isFacingU
-                     
-                     
-                     
-                     ser ? 'user' : 'environment')
+        facingMode: (this.isFacingUser ? 'user' : 'environment')
       }})
         .then(stream => {
             this.video = document.createElement('video');
