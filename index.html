@@ -68,29 +68,49 @@
         };
 
         // Record video với cả âm thanh từ thẻ video AR (nếu đang phát)
+        function patchUnityAudioContext() {
+    // Cố gắng lấy AudioContext Unity (thường là window.UnityAudio.context)
+    let ctx = (window.UnityAudio && window.UnityAudio.context) || null;
+    if (!ctx) return null;
+    let unityMediaDest = ctx.createMediaStreamDestination();
+    try {
+        ctx.destination.connect(unityMediaDest);
+    } catch (e) {}
+    return unityMediaDest;
+}
+
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
-            const canvasStream = canvas.captureStream(30); // 30 fps
-
-            // Nếu video AR đang phát, lấy audio track từ nó và add vào stream
-            if (!arVideo.paused && !arVideo.ended && arVideo.readyState > 2) {
-                let videoStream = arVideo.captureStream();
-                let audioTracks = videoStream.getAudioTracks();
-                audioTracks.forEach(track => {
+            const canvasStream = canvas.captureStream(30);
+        
+            // 1. Add audio từ Unity AudioSource (nếu có)
+            let unityMediaDest = patchUnityAudioContext();
+            if (unityMediaDest) {
+                unityMediaDest.stream.getAudioTracks().forEach(track => {
                     canvasStream.addTrack(track);
                 });
             }
-
-            // Nếu không có audio, vẫn record hình
+        
+            // 2. Add audio từ video AR (nếu có thẻ video đang phát)
+            const arVideo = document.getElementById("ar-video");
+            if (
+                arVideo &&
+                !arVideo.paused &&
+                !arVideo.ended &&
+                arVideo.readyState > 2
+            ) {
+                let videoStream = arVideo.captureStream();
+                videoStream.getAudioTracks().forEach(track => {
+                    canvasStream.addTrack(track);
+                });
+            }
+        
             let mimeType = 'video/mp4;codecs=vp9,opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4;codecs=vp8,opus';
             if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
-
+        
             mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType });
             mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
+                if (event.data.size > 0) recordedChunks.push(event.data);
             };
             mediaRecorder.onstop = function() {
                 const blob = new Blob(recordedChunks, { type: mimeType });
