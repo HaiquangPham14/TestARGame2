@@ -49,64 +49,89 @@
         var recordedChunks = [];
 
         // --- AudioContext patch for Unity WebGL ---
-        // These variables will hold the context and destination node
         let unityAudioContext = null;
         let unityMediaDestination = null;
+        let unityInstance = null; // To store the Unity instance
 
-        // Function to be called when we find Unity's AudioContext
+        // Function to set up audio capture
         function setupUnityAudioCapture(ctx) {
             if (!ctx) return;
             unityAudioContext = ctx;
             unityMediaDestination = unityAudioContext.createMediaStreamDestination();
-            // Patch AudioContext's destination to also output to our destination (if not already connected)
             try {
+                // Redirect Unity's audio output to our destination
                 unityAudioContext.destination.connect(unityMediaDestination);
+                console.log("Unity AudioContext patched for recording");
             } catch (e) {
-                // Already connected or not possible
+                console.warn("Could not connect to Unity AudioContext destination:", e);
             }
-            // You may log for debug:
-            // console.log('Unity AudioContext patched for recording');
         }
 
-        // Try to hook into Unity's AudioContext after Unity loads
-        // This assumes createUnityInstance is available globally
-        // (If you're using a custom loader, ensure this part runs after Unity instance is created)
+        // Enhanced function to find Unity's AudioContext
         function tryFindUnityAudioContext() {
-            // Some Unity builds expose it as window.UnityAudio.context
+            // Check if Unity exposes its audio context
             if (window.UnityAudio && window.UnityAudio.context) {
                 setupUnityAudioCapture(window.UnityAudio.context);
                 return true;
             }
-            // Try to detect via any global AudioContext that exists
+            // Check for global AudioContext instances
             if (window.AudioContext || window.webkitAudioContext) {
-                // Look for a context with a property that looks like Unity's
                 for (let key in window) {
-                    if (
-                        window[key] &&
-                        window[key] instanceof (window.AudioContext || window.webkitAudioContext) &&
-                        window[key].destination &&
-                        window[key].destination.maxChannelCount
-                    ) {
-                        setupUnityAudioCapture(window[key]);
-                        return true;
+                    try {
+                        let ctx = window[key];
+                        if (
+                            ctx instanceof (window.AudioContext || window.webkitAudioContext) &&
+                            ctx.destination && // Ensure it's an AudioContext with a destination
+                            ctx.state !== "suspended" // Ensure it's active
+                        ) {
+                            // Additional heuristic: Unity often has a specific structure
+                            if (
+                                ctx.currentTime > 0 || // Unity's context often has a non-zero currentTime
+                                (ctx.createBufferSource && ctx.createGain) // Unity uses these nodes
+                            ) {
+                                setupUnityAudioCapture(ctx);
+                                return true;
+                            }
+                        }
+                    } catch (e) {
+                        // Skip any errors from accessing properties
                     }
                 }
             }
             return false;
         }
 
-        // Poll for Unity AudioContext for a few seconds after Unity loads
+        // Poll for Unity AudioContext after Unity loads
         function pollUnityAudioContext() {
             let attempts = 0;
             let interval = setInterval(() => {
                 if (tryFindUnityAudioContext()) {
                     clearInterval(interval);
-                } else if (++attempts > 40) { // ~8 seconds
+                } else if (++attempts > 50) { // ~10 seconds
                     clearInterval(interval);
+                    console.warn("Could not find Unity AudioContext. Falling back to system audio capture.");
+                    // Fallback to system audio capture
+                    useSystemAudioCapture();
                 }
             }, 200);
         }
 
+        // Fallback to system audio capture using getDisplayMedia
+        let displayStream = null;
+        async function useSystemAudioCapture() {
+            try {
+                displayStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true // Attempt to capture system audio
+                });
+                console.log("System audio capture enabled via getDisplayMedia");
+            } catch (e) {
+                console.error("Failed to capture system audio:", e);
+                alert("Không thể ghi âm thanh hệ thống: " + e.message);
+            }
+        }
+
+        // Capture photo
         document.querySelector("#capture-button").onclick = function () {
             requestAnimationFrame(() => {
                 var link = document.createElement('a');
@@ -116,29 +141,46 @@
             });
         };
 
-        // Record video with Unity audio
-        document.querySelector("#record-button").onclick = function() {
+        // Record video with audio
+        document.querySelector("#record-button").onclick = async function() {
             recordedChunks = [];
-            const canvasStream = canvas.captureStream(30); // 30 fps
 
-            // Add Unity's audio track if possible
+            let canvasStream = canvas.captureStream(30); // 30 fps
+
+            // Try to add Unity's audio track if available
             if (unityMediaDestination && unityMediaDestination.stream) {
-                var audioTracks = unityMediaDestination.stream.getAudioTracks();
-                audioTracks.forEach(track => {
-                    canvasStream.addTrack(track);
-                });
+                const audioTracks = unityMediaDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    audioTracks.forEach(track => canvasStream.addTrack(track));
+                    console.log("Unity audio tracks added to recording");
+                } else {
+                    console.log("No Unity audio tracks available");
+                }
             }
 
-            // Use video/mp4;codecs=vp9,opus for better compatibility
-            let mimeType = 'video/mp4;codecs=vp9,opus';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'video/mp4;codecs=vp8,opus';
-            }
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'video/mp4';
+            // If we have a display stream (system audio), use it instead
+            let finalStream = canvasStream;
+            if (displayStream) {
+                finalStream = new MediaStream();
+                // Add video from display stream
+                displayStream.getVideoTracks().forEach(track => finalStream.addTrack(track));
+                // Add audio from display stream (system audio)
+                const audioTracks = displayStream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    audioTracks.forEach(track => finalStream.addTrack(track));
+                    console.log("System audio tracks added to recording");
+                } else {
+                    console.log("No system audio tracks available");
+                }
             }
 
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: mimeType });
+            // Use video/webm for better compatibility
+            let mimeType = 'video/webm;codecs=vp8,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm';
+            }
+
+            mediaRecorder = new MediaRecorder(finalStream, { mimeType: mimeType });
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
@@ -148,8 +190,13 @@
                 const blob = new Blob(recordedChunks, { type: mimeType });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.mp4`;
+                link.download = `recording-${Date.now()}.webm`;
                 link.click();
+                // Stop display stream tracks if used
+                if (displayStream) {
+                    displayStream.getTracks().forEach(track => track.stop());
+                    displayStream = null;
+                }
             };
             mediaRecorder.start();
             document.querySelector("#record-button").style.display = 'none';
@@ -195,6 +242,9 @@
             productName: "WebAR Sapporo",
             productVersion: "0.1.0",
             showBanner: unityShowBanner,
+            webglContextAttributes: {
+                preserveDrawingBuffer: true
+            }
         };
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -216,7 +266,8 @@
         script.onload = () => {
             createUnityInstance(canvas, config, (progress) => {
                 document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
+            }).then((instance) => {
+                unityInstance = instance;
                 document.querySelector("#unity-loading-bar").style.display = "none";
                 document.querySelector("#unity-fullscreen-button").onclick = () => {
                     unityInstance.SetFullscreen(1);
