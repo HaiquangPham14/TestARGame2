@@ -51,26 +51,13 @@
         var mediaStreamDestination;
 
         async function initializeAudioCapture() {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                mediaStreamDestination = audioContext.createMediaStreamDestination();
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            mediaStreamDestination = audioContext.createMediaStreamDestination();
 
-                // Get audio from microphone
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const microphone = audioContext.createMediaStreamSource(stream);
-                microphone.connect(mediaStreamDestination);
-
-                console.log("Audio capture initialized");
-            } catch (error) {
-                console.error("Error initializing audio capture:", error);
-                alert("Không thể truy cập âm thanh: " + error.message);
-            }
+            console.log("Audio capture initialized");
         }
-
-        // Initialize audio capture on page load
         initializeAudioCapture();
 
-        // Capture photo
         document.querySelector("#capture-button").onclick = function () {
             requestAnimationFrame(() => {
                 var link = document.createElement('a');
@@ -85,23 +72,23 @@
             recordedChunks = [];
             const canvasStream = canvas.captureStream(30); // 30 fps
 
-            // Combine audio from Unity and microphone
+            // Kết hợp âm thanh từ MediaStreamDestination
             if (mediaStreamDestination && mediaStreamDestination.stream) {
                 const audioTracks = mediaStreamDestination.stream.getAudioTracks();
                 audioTracks.forEach(track => canvasStream.addTrack(track));
             }
 
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' }); // Use WebM for better compatibility
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' });
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
                 }
             };
             mediaRecorder.onstop = function() {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.webm`;
+                link.download = `recording-${Date.now()}.mp4`;
                 link.click();
             };
             mediaRecorder.start();
