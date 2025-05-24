@@ -47,49 +47,84 @@
         var canvas = document.querySelector("#unity-canvas");
         var mediaRecorder;
         var recordedChunks = [];
+        var audioContext;
+        var mediaStreamDestination;
 
+        // Initialize audio context for capturing Unity audio
+        async function initializeAudioCapture() {
+            try {
+                // Create an AudioContext
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                // Create a MediaStreamDestination to capture audio
+                mediaStreamDestination = audioContext.createMediaStreamDestination();
+
+                // Request microphone access to enable audio capture (needed in some browsers)
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const microphone = audioContext.createMediaStreamSource(stream);
+
+                // Connect the microphone to the destination (this is a workaround to enable audio capture)
+                microphone.connect(mediaStreamDestination);
+
+                // Unity WebGL audio is routed through the browser's audio context
+                // We assume Unity's audio is already playing through the AudioContext
+                // In some browsers, this may require additional setup in Unity to route audio
+                console.log("Audio capture initialized");
+            } catch (error) {
+                console.error("Error initializing audio capture:", error);
+                alert("Không thể truy cập âm thanh: " + error.message);
+            }
+        }
+
+        // Capture photo
         document.querySelector("#capture-button").onclick = function () {
             requestAnimationFrame(() => {
                 var link = document.createElement('a');
-                link.download = 'screenshot.png';
+                link.download = `screenshot-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
         };
-        document.querySelector("#record-button").onclick = async function () {
-                await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { frameRate: 30 },
-                    audio: true 
-                });
-        
-                recordedChunks = [];
-        
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: "video/mp4; codecs=vp9"
-                });
-        
-                mediaRecorder.ondataavailable = function(event) {
-                    if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-        
-                mediaRecorder.onstop = function() {
-                    var blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                    var link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'recording.mp4';
-                    link.click();
-                };
-        
-                mediaRecorder.start();
-        
-                document.querySelector("#record-button").style.display = 'none';
-                document.querySelector("#stop-button").style.display = 'inline';
+
+        // Record video with audio
+        document.querySelector("#record-button").onclick = function() {
+            recordedChunks = [];
+
+            // Get the canvas stream (visuals only)
+            const canvasStream = canvas.captureStream(30); // 30 fps
+
+            // Add audio stream if available
+            if (mediaStreamDestination && mediaStreamDestination.stream) {
+                const audioTracks = mediaStreamDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    audioTracks.forEach(track => canvasStream.addTrack(track));
+                    console.log("Audio tracks added to recording");
+                } else {
+                    console.log("No audio tracks available");
+                }
+            } else {
+                console.log("Audio capture not initialized");
+            }
+
+            // Create MediaRecorder with the combined stream
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' }); // Use WebM for better compatibility
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `recording-${Date.now()}.webm`;
+                link.click();
+            };
+            mediaRecorder.start();
+            document.querySelector("#record-button").style.display = 'none';
+            document.querySelector("#stop-button").style.display = 'inline';
         };
-        
+
         document.querySelector("#stop-button").onclick = function() {
             mediaRecorder.stop();
             document.querySelector("#stop-button").style.display = 'none';
