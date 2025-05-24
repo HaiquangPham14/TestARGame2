@@ -101,7 +101,7 @@ var Module=typeof unityFramework!="undefined"?unityFramework:{};var readyPromise
     StartVideo: function () {
       //navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: FacingModes[this.facingMode]}})
       return new Promise((resolve) => {
-        navigator.mediaDevices.getUserMedia({audio: true, video: {
+        navigator.mediaDevices.getUserMedia({audio: false, video: {
           facingMode: (this.isFacingUser ? 'user' : 'environment')
         }})
           .then(stream => {
@@ -338,7 +338,7 @@ Module["MindARImage"] = {
   StartVideo: function () {
     //navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: FacingModes[this.facingMode]}})
     return new Promise((resolve) => {
-      navigator.mediaDevices.getUserMedia({audio: true, video: {
+      navigator.mediaDevices.getUserMedia({audio: false, video: {
         facingMode: (this.isFacingU
                      
                      
