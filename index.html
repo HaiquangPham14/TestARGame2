@@ -39,7 +39,7 @@
         </div>
     </div>
     <div id="controls">
-        <button id="capture-button"> Chụp Ảnh </button>
+        <button id="capture-button">Chụp Ảnh</button>
         <button id="record-button">Bắt Đầu Quay</button>
         <button id="stop-button" style="display: none;">Dừng Quay</button>
     </div>
@@ -50,31 +50,24 @@
         var audioContext;
         var mediaStreamDestination;
 
-        // Initialize audio context for capturing Unity audio
         async function initializeAudioCapture() {
             try {
-                // Create an AudioContext
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-                // Create a MediaStreamDestination to capture audio
                 mediaStreamDestination = audioContext.createMediaStreamDestination();
 
-                // Request microphone access to enable audio capture (needed in some browsers)
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const microphone = audioContext.createMediaStreamSource(stream);
-
-                // Connect the microphone to the destination (this is a workaround to enable audio capture)
                 microphone.connect(mediaStreamDestination);
-
-                // Unity WebGL audio is routed through the browser's audio context
-                // We assume Unity's audio is already playing through the AudioContext
-                // In some browsers, this may require additional setup in Unity to route audio
+                
                 console.log("Audio capture initialized");
             } catch (error) {
                 console.error("Error initializing audio capture:", error);
                 alert("Không thể truy cập âm thanh: " + error.message);
             }
         }
+
+        // Initialize audio capture on page load
+        initializeAudioCapture();
 
         // Capture photo
         document.querySelector("#capture-button").onclick = function () {
@@ -89,24 +82,17 @@
         // Record video with audio
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
-
-            // Get the canvas stream (visuals only)
             const canvasStream = canvas.captureStream(30); // 30 fps
 
-            // Add audio stream if available
+            // Add audio tracks from both Unity and microphone
             if (mediaStreamDestination && mediaStreamDestination.stream) {
                 const audioTracks = mediaStreamDestination.stream.getAudioTracks();
-                if (audioTracks.length > 0) {
-                    audioTracks.forEach(track => canvasStream.addTrack(track));
-                    console.log("Audio tracks added to recording");
-                } else {
-                    console.log("No audio tracks available");
-                }
+                audioTracks.forEach(track => canvasStream.addTrack(track));
+                console.log("Audio tracks added to recording");
             } else {
-                console.log("Audio capture not initialized");
+                console.log("No audio tracks available");
             }
 
-            // Create MediaRecorder with the combined stream
             mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' }); // Use WebM for better compatibility
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
