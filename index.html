@@ -126,16 +126,16 @@
         });
 
         // Record
-        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' });
         mediaRecorder.ondataavailable = function(event) {
           if (event.data.size > 0) recordedChunks.push(event.data);
         };
         mediaRecorder.onstop = function() {
-          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const blob = new Blob(recordedChunks, { type: 'video/mp4' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `recording-${Date.now()}.webm`;
+          a.download = `recording-${Date.now()}.mp4`;
           a.click();
         };
         mediaRecorder.start();
