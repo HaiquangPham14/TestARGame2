@@ -82,21 +82,21 @@
         // Record video with audio
         document.querySelector("#record-button").onclick = async function() {
             recordedChunks = [];
-            //const canvasStream = canvas.captureStream(30); // 30 fps
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: { frameRate: 30 },
                 audio: true 
             });
-            // Add audio Unity and microphone
+            
+            // Thêm audio từ microphone
             if (mediaStreamDestination && mediaStreamDestination.stream) {
                 const audioTracks = mediaStreamDestination.stream.getAudioTracks();
-                audioTracks.forEach(track => canvasStream.addTrack(track));
+                audioTracks.forEach(track => stream.addTrack(track)); // Sử dụng stream thay vì canvasStream
                 console.log("Audio tracks added to recording");
             } else {
                 console.log("No audio tracks available");
             }
-            
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' }); // Use WebM for better compatibility
+        
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }); // Sử dụng mp4 cho tương thích tốt hơn
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
@@ -113,7 +113,7 @@
             document.querySelector("#record-button").style.display = 'none';
             document.querySelector("#stop-button").style.display = 'inline';
         };
-
+        
         document.querySelector("#stop-button").onclick = function() {
             mediaRecorder.stop();
             document.querySelector("#stop-button").style.display = 'none';
