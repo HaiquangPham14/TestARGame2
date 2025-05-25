@@ -18,13 +18,25 @@
         max-width: 100px;
         margin-top: 8px;
       }
-      /* Ẩn video camera thật */
+      #loader {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 1000;
+      }
       #real-camera-video {
         display: none;
       }
     </style>
   </head>
   <body>
+    <div id="loader">Đang tải ứng dụng...</div>
+
     <a-scene
       mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/targets.mind"
       color-space="sRGB"
@@ -36,7 +48,7 @@
         <video
           id="video1"
           src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4"
-          preload="auto"
+          preload="metadata"
           crossorigin="anonymous"
           webkit-playsinline
           playsinline
@@ -57,7 +69,6 @@
       </a-entity>
     </a-scene>
 
-    <!-- Video ẩn cho camera thật -->
     <video id="real-camera-video" autoplay playsinline></video>
 
     <div id="controls">
@@ -72,6 +83,7 @@
       let mediaRecorder, recordedChunks = [];
       let audioCtx, dest;
       let realCameraStream;
+      let isUserInteracted = false;
 
       // === KHỞI TẠO CAMERA PHÍA SAU ===
       async function initializeRealCamera() {
@@ -91,26 +103,46 @@
         }
       }
 
-      // === PHẦN PRELOAD VÀ XỬ LÝ AR ===
-      document.addEventListener("DOMContentLoaded", () => {
-        initializeRealCamera();
+      // === XỬ LÝ VIDEO AR ===
+      async function setupARVideo() {
         const video = document.getElementById("video1");
         const target = document.querySelector("#target");
         
+        // Tải video trước
         video.load();
-        video.muted = true;
-        video.play().then(() => {
-          video.pause();
-          video.currentTime = 0;
-          video.muted = false;
-        }).catch(() => {});
+        
+        // Xử lý autoplay
+        const tryPlay = async () => {
+          try {
+            await video.play();
+            document.getElementById('loader').style.display = 'none';
+          } catch (err) {
+            if (!isUserInteracted) {
+              document.getElementById('loader').innerHTML = 'Chạm vào màn hình để bắt đầu';
+            }
+          }
+        };
 
-        target.addEventListener("targetFound", () => video.play());
+        // Sự kiện tương tác người dùng
+        document.body.addEventListener('click', async () => {
+          if (!isUserInteracted) {
+            isUserInteracted = true;
+            await tryPlay();
+          }
+        });
+
+        target.addEventListener("targetFound", async () => {
+          if (video.paused) await video.play();
+        });
+
         target.addEventListener("targetLost", () => {
           video.pause();
           video.currentTime = 0;
         });
-      });
+
+        // Thử phát video lần đầu
+        await tryPlay();
+      }
 
       // === CHỨC NĂNG CHỤP ẢNH ===
       document.getElementById('capture-button').onclick = function () {
@@ -126,13 +158,14 @@
         link.click();
       };
 
-      // === CHỨC NĂNG QUAY VIDEO ===
+      // === CHỨC NĂNG QUAY VIDEO (ĐÃ SỬA ÂM THANH) ===
       document.getElementById('record-button').onclick = async function () {
         try {
           recordedChunks = [];
           const arCanvas = document.querySelector('canvas.a-canvas');
           const realCameraVideo = document.getElementById('real-camera-video');
-          
+          const arVideo = document.getElementById('video1');
+
           // Tạo canvas tổng hợp
           const combinedCanvas = document.createElement('canvas');
           combinedCanvas.width = arCanvas.width;
@@ -142,15 +175,16 @@
           // Tạo stream từ canvas tổng hợp
           const stream = combinedCanvas.captureStream(30);
           
-          // Thêm âm thanh
+          // Xử lý âm thanh
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
           dest = audioCtx.createMediaStreamDestination();
           
-          // Âm thanh từ video AR
-          const videoSource = audioCtx.createMediaElementSource(document.getElementById('video1'));
-          videoSource.connect(dest);
+          // Kết nối âm thanh video AR
+          const videoSource = audioCtx.createMediaElementSource(arVideo);
+          videoSource.connect(audioCtx.destination); // Phát ra loa
+          videoSource.connect(dest); // Gửi đến bản ghi
           
-          // Âm thanh từ microphone
+          // Âm thanh microphone
           const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
           const micSource = audioCtx.createMediaStreamSource(micStream);
           micSource.connect(dest);
@@ -158,22 +192,21 @@
           // Kết hợp audio
           dest.stream.getAudioTracks().forEach(track => stream.addTrack(track));
           
-          // Vẽ khung hình kết hợp
+          // Vẽ khung hình
           function drawFrame() {
             if (!realCameraVideo.paused) {
-              // Vẽ camera thật làm nền
               ctx.drawImage(realCameraVideo, 0, 0, combinedCanvas.width, combinedCanvas.height);
-              // Vẽ AR content lên trên
               ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
             }
             requestAnimationFrame(drawFrame);
           }
           drawFrame();
           
-          // Thiết lập MediaRecorder
+          // Thiết lập recorder
           mediaRecorder = new MediaRecorder(stream, { 
             mimeType: 'video/mp4',
-            videoBitsPerSecond: 2500000 
+            videoBitsPerSecond: 2500000,
+            audioBitsPerSecond: 128000
           });
           
           mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
@@ -196,13 +229,18 @@
 
       // === DỪNG QUAY ===
       document.getElementById('stop-button').onclick = function () {
-        mediaRecorder.stop();
-        if (realCameraStream) {
-          realCameraStream.getTracks().forEach(track => track.stop());
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
         }
         document.getElementById('stop-button').style.display = 'none';
         document.getElementById('record-button').style.display = '';
       };
+
+      // === KHỞI TẠO ỨNG DỤNG ===
+      document.addEventListener("DOMContentLoaded", async () => {
+        await initializeRealCamera();
+        await setupARVideo();
+      });
     </script>
   </body>
 </html>
