@@ -90,23 +90,14 @@
         return document.querySelector('canvas.a-canvas');
       }
 
-      document.getElementById('capture-button').onclick = function () {
-        const canvas = getARCanvas();
-        if (!canvas) {
-          alert("Không tìm thấy canvas của AR!");
-          return;
-        }
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL('image/png');
-        const preview = document.getElementById('photo-preview');
-        preview.innerHTML = '';
-        preview.appendChild(img);
-
-        const link = document.createElement('a');
-        link.download = `screenshot-${Date.now()}.png`;
-        link.href = img.src;
-        link.click();
-      };
+       document.querySelector("#capture-button").onclick = function () {
+            requestAnimationFrame(() => {
+                var link = document.createElement('a');
+                link.download = `screenshot-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        };
 
       let mediaRecorder, recordedChunks = [];
       let audioCtx, dest;
@@ -155,16 +146,16 @@
         });
 
         // Record
-        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' });
         mediaRecorder.ondataavailable = function(event) {
           if (event.data.size > 0) recordedChunks.push(event.data);
         };
         mediaRecorder.onstop = function() {
-          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const blob = new Blob(recordedChunks, { type: 'video/mp4' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `recording-${Date.now()}.webm`;
+          a.download = `recording-${Date.now()}.mp4`;
           a.click();
         };
         mediaRecorder.start();
