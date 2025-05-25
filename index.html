@@ -14,10 +14,6 @@
         display: flex;
         gap: 12px;
       }
-      #photo-preview img {
-        max-width: 100px;
-        margin-top: 8px;
-      }
       #loader {
         position: fixed;
         top: 50%;
@@ -75,7 +71,6 @@
       <button id="capture-button">Chụp ảnh</button>
       <button id="record-button">Bắt đầu quay</button>
       <button id="stop-button" style="display:none">Dừng quay</button>
-      <div id="photo-preview"></div>
     </div>
 
     <script>
@@ -149,8 +144,6 @@
         const canvas = document.querySelector('canvas.a-canvas');
         const img = document.createElement('img');
         img.src = canvas.toDataURL('image/png');
-        document.getElementById('photo-preview').innerHTML = '';
-        document.getElementById('photo-preview').appendChild(img);
         
         const link = document.createElement('a');
         link.download = `screenshot-${Date.now()}.png`;
