@@ -98,17 +98,17 @@
                     console.log("No audio tracks available");
                 }
         
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); // Sử dụng WebM cho tương thích tốt hơn
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }); // Sử dụng mp4 cho tương thích tốt hơn
                 mediaRecorder.ondataavailable = function(event) {
                     if (event.data.size > 0) {
                         recordedChunks.push(event.data);
                     }
                 };
                 mediaRecorder.onstop = function() {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = `recording-${Date.now()}.webm`;
+                    link.download = `recording-${Date.now()}.mp4`;
                     link.click();
                 };
                 mediaRecorder.start();
