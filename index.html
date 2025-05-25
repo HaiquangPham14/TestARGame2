@@ -22,10 +22,9 @@
     <button id="stop-button" style="display:none;">Dừng quay</button>
     <div id="photo-preview"></div>
   </div>
-  <!-- mindar phải dùng .mind file làm target -->
   <script>
     const VIDEO_URL = "https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/Sapporo%20Premium%20Beer%20-%203-STEP%20POURING%2C%20THE%20EXCELLENCY%20OF%20SMOOTHNESS.mp4";
-    const MIND_FILE = "targets.mind"; // Đổi thành file .mind bạn tạo từ ảnh cần detect
+    const MIND_FILE = "targets.mind"; 
 
     const arVideo = document.getElementById('ar-video');
     arVideo.src = VIDEO_URL;
@@ -57,7 +56,6 @@
       arVideo.style.display = "none";
     });
 
-    // Render loop: vẽ frame lên canvas (có thể dùng để chụp/quay)
     async function renderLoop() {
       renderer.render(scene, camera);
       ctx.drawImage(renderer.domElement, 0, 0, canvas.width, canvas.height);
