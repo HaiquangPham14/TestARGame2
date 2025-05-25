@@ -2,7 +2,6 @@
 <html lang="en-us">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Unity Web Player | WebAR Sapporo</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
@@ -24,7 +23,7 @@
 </head>
 <body>
     <div id="unity-container" class="unity-desktop">
-        <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+        <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
         <div id="unity-loading-bar">
             <div id="unity-logo"></div>
             <div id="unity-progress-bar-empty">
@@ -38,130 +37,115 @@
             <div id="unity-build-title">WebAR Sapporo</div>
         </div>
     </div>
+
     <video id="ar-video" style="display:none; position:absolute; left:0; top:0;" controls crossorigin="anonymous"></video>
+
     <div id="controls">
         <button id="capture-button">Chụp Ảnh</button>
         <button id="record-button">Bắt Đầu Quay</button>
         <button id="stop-button" style="display: none;">Dừng Quay</button>
     </div>
+
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
     <script>
-        var canvas = document.querySelector("#unity-canvas");
-        var arVideo = document.getElementById("ar-video");
+        const canvas = document.getElementById("unity-canvas");
+        const arVideo = document.getElementById("ar-video");
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({ log: true });
-        var mediaRecorder;
-        var recordedChunks = [];
 
-        // Cập nhật source video và play khi detect đúng ảnh (Unity gọi hàm này)
-        // Ví dụ: unityInstance.SendMessage("JSBridge", "PlayARVideo", "video.mp4");
-        window.PlayARVideo = function(src) {
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        // Unity gọi hàm này để play video
+        window.PlayARVideo = function (src) {
             arVideo.src = src;
             arVideo.style.display = "block";
             arVideo.play();
         }
 
-        document.querySelector("#capture-button").onclick = function () {
+        document.getElementById("capture-button").onclick = () => {
             requestAnimationFrame(() => {
-                var link = document.createElement('a');
+                const link = document.createElement('a');
                 link.download = `screenshot-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
         };
 
-        function patchUnityAudioContext() {
-            let ctx = (window.UnityAudio && window.UnityAudio.context) || null;
-            if (!ctx) return null;
-            let unityMediaDest = ctx.createMediaStreamDestination();
-            try {
-                ctx.destination.connect(unityMediaDest);
-            } catch (e) {}
-            return unityMediaDest;
-        }
-
-       document.querySelector("#record-button").onclick = async function () {
+        document.getElementById("record-button").onclick = async () => {
             recordedChunks = [];
-            const canvas = document.getElementById('unity-canvas');
-            const video = document.getElementById('ar-video');
-        
-            const canvasStream = canvas.captureStream(30); // 30 FPS
-        
-            // Nếu video có âm thanh thì thêm vào
-            if (video && !video.paused && !video.ended && video.readyState > 2) {
-                const videoStream = video.captureStream();
+
+            const canvasStream = canvas.captureStream(30);
+
+            if (arVideo && !arVideo.paused && !arVideo.ended && arVideo.readyState > 2) {
+                const videoStream = arVideo.captureStream();
                 videoStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
             }
-        
+
             const mimeType = 'video/webm;codecs=vp9,opus';
             mediaRecorder = new MediaRecorder(canvasStream, { mimeType });
-        
-            mediaRecorder.ondataavailable = function (event) {
-                if (event.data.size > 0) recordedChunks.push(event.data);
+
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
             };
-        
-            mediaRecorder.onstop = async function () {
+
+            mediaRecorder.onstop = async () => {
                 const blob = new Blob(recordedChunks, { type: mimeType });
-                const webmFile = new File([blob], "recording.webm");
-        
-                // Load ffmpeg if not already loaded
+                const webmFile = new File([blob], 'recording.webm');
+
                 if (!ffmpeg.isLoaded()) {
                     await ffmpeg.load();
                 }
-        
+
                 ffmpeg.FS('writeFile', 'input.webm', await fetchFile(webmFile));
                 await ffmpeg.run('-i', 'input.webm', '-c:v', 'libx264', '-c:a', 'aac', 'output.mp4');
                 const data = ffmpeg.FS('readFile', 'output.mp4');
-        
+
                 const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
                 const url = URL.createObjectURL(mp4Blob);
-        
+
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `recording-${Date.now()}.mp4`;
                 a.click();
-        
-                // Optional: clean memory
+
+                // Xoá file khỏi memory
                 ffmpeg.FS('unlink', 'input.webm');
                 ffmpeg.FS('unlink', 'output.mp4');
             };
-        
+
             mediaRecorder.start();
-            document.querySelector("#record-button").style.display = 'none';
-            document.querySelector("#stop-button").style.display = 'inline';
+            document.getElementById("record-button").style.display = "none";
+            document.getElementById("stop-button").style.display = "inline";
         };
-        
-        document.querySelector("#stop-button").onclick = function () {
+
+        document.getElementById("stop-button").onclick = () => {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 mediaRecorder.stop();
             }
-            document.querySelector("#stop-button").style.display = 'none';
-            document.querySelector("#record-button").style.display = 'inline';
+            document.getElementById("stop-button").style.display = "none";
+            document.getElementById("record-button").style.display = "inline";
         };
 
+        // Unity Banner Handler
         function unityShowBanner(msg, type) {
-            var warningBanner = document.querySelector("#unity-warning");
-            function updateBannerVisibility() {
-                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-            }
-            var div = document.createElement('div');
+            const warningBanner = document.getElementById("unity-warning");
+            const div = document.createElement('div');
             div.innerHTML = msg;
+            if (type === 'error') div.style = 'background: red; padding: 10px;';
+            if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
             warningBanner.appendChild(div);
-            if (type == 'error') div.style = 'background: red; padding: 10px;';
-            else {
-                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-                setTimeout(function() {
-                    warningBanner.removeChild(div);
-                    updateBannerVisibility();
-                }, 5000);
-            }
-            updateBannerVisibility();
+            setTimeout(() => {
+                warningBanner.removeChild(div);
+                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+            }, 5000);
+            warningBanner.style.display = 'block';
         }
 
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/FinalWebAR.loader.js";
-        var config = {
-            arguments: [],
+        // Unity Config
+        const buildUrl = "Build";
+        const loaderUrl = buildUrl + "/FinalWebAR.loader.js";
+        const config = {
             dataUrl: buildUrl + "/FinalWebAR.data",
             frameworkUrl: buildUrl + "/FinalWebAR.framework.js",
             codeUrl: buildUrl + "/FinalWebAR.wasm",
@@ -170,41 +154,36 @@
             productName: "WebAR Sapporo",
             productVersion: "0.1.0",
             showBanner: unityShowBanner,
-            webglContextAttributes: {
-                preserveDrawingBuffer: true
-            }
+            webglContextAttributes: { preserveDrawingBuffer: true }
         };
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            var meta = document.createElement('meta');
+            const meta = document.createElement('meta');
             meta.name = 'viewport';
             meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-            document.getElementsByTagName('head')[0].appendChild(meta);
-            document.querySelector("#unity-container").className = "unity-mobile";
+            document.head.appendChild(meta);
+            document.getElementById("unity-container").className = "unity-mobile";
             canvas.className = "unity-mobile";
         } else {
             canvas.style.width = "960px";
             canvas.style.height = "600px";
         }
 
-        document.querySelector("#unity-loading-bar").style.display = "block";
+        document.getElementById("unity-loading-bar").style.display = "block";
 
-        var script = document.createElement("script");
+        const script = document.createElement("script");
         script.src = loaderUrl;
         script.onload = () => {
             createUnityInstance(canvas, config, (progress) => {
-                document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+                document.getElementById("unity-progress-bar-full").style.width = (100 * progress) + "%";
             }).then((instance) => {
                 unityInstance = instance;
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
+                document.getElementById("unity-loading-bar").style.display = "none";
+                document.getElementById("unity-fullscreen-button").onclick = () => {
                     unityInstance.SetFullscreen(1);
                 };
-            }).catch((message) => {
-                alert(message);
-            });
+            }).catch((message) => alert(message));
         };
-
         document.body.appendChild(script);
     </script>
 </body>
