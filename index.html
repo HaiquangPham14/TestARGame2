@@ -96,7 +96,7 @@
             const audioStream = audioContext.createMediaStreamSource(mediaStreamDestination.stream);
             audioStream.connect(audioContext.destination);
             
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' }); // Use WebM for better compatibility
+            mediaRecorder = new MediaRecorder(canvasStream, audio: true , { mimeType: 'video/mp4' }); // Use WebM for better compatibility
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
