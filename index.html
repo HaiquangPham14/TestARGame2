@@ -80,7 +80,7 @@
         };
 
         // Record video with audio
-        document.querySelector("#record-button").onclick = function() {
+        document.querySelector("#record-button").onclick = async function() {
             recordedChunks = [];
             //const canvasStream = canvas.captureStream(30); // 30 fps
             const stream = await navigator.mediaDevices.getDisplayMedia({
