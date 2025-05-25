@@ -1,67 +1,135 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  </head>
-  <body>
+</head>
+<body>
     <a-scene
-      mindar-image="imageTargetSrc: https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/targets.mind"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
+        mindar-image="imageTargetSrc: https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/targets.mind"
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
     >
-      <a-assets>
-        <video
-          id="video1"
-          src="https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/Sapporo%20Premium%20Beer%20-%203-STEP%20POURING%2C%20THE%20EXCELLENCY%20OF%20SMOOTHNESS.mp4"
-          preload="auto"
-          loop
-          crossorigin="anonymous"
-          webkit-playsinline
-          playsinline
-        ></video>
-      </a-assets>
+        <a-assets>
+            <video
+                id="video1"
+                src="https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/Sapporo%20Premium%20Beer%20-%203-STEP%20POURING%2C%20THE%20EXCELLENCY%20OF%20SMOOTHNESS.mp4"
+                preload="auto"
+                loop
+                crossorigin="anonymous"
+                webkit-playsinline
+                playsinline
+            ></video>
+        </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
-        <a-video
-          id="video-plane"
-          src="#video1"
-          width="1"
-          height="0.5625"
-          position="0 0 0"
-          rotation="0 0 0"
-        ></a-video>
-      </a-entity>
+        <a-entity id="target" mindar-image-target="targetIndex: 0">
+            <a-video
+                id="video-plane"
+                src="#video1"
+                width="1"
+                height="0.5625"
+                position="0 0 0"
+                rotation="0 0 0"
+            ></a-video>
+        </a-entity>
     </a-scene>
 
+    <div id="controls">
+        <button id="capture-button">Chụp ảnh</button>
+        <button id="record-button">Bắt đầu quay</button>
+        <button id="stop-button" style="display:none;">Dừng quay</button>
+        <div id="photo-preview"></div>
+    </div>
+
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
         const video = document.querySelector("#video1");
         const target = document.querySelector("#target");
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        let mediaRecorder;
+        let recordedChunks = [];
+        let audioContext;
+        let mediaStreamDestination;
+
+        // Khởi tạo âm thanh
+        async function initializeAudioCapture() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                mediaStreamDestination = audioContext.createMediaStreamDestination();
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(mediaStreamDestination);
+                console.log("Audio capture initialized");
+            } catch (error) {
+                console.error("Error initializing audio capture:", error);
+                alert("Không thể truy cập âm thanh: " + error.message);
+            }
+        }
+
+        // Bắt đầu khởi tạo âm thanh khi tải trang
+        initializeAudioCapture();
 
         // Khi nhận diện được ảnh
         target.addEventListener("targetFound", () => {
-          video.play();
+            video.play();
         });
 
         // Khi mất ảnh
         target.addEventListener("targetLost", () => {
-          video.pause();
-          video.currentTime = 0; // quay về đầu video nếu muốn
+            video.pause();
+            video.currentTime = 0; // quay về đầu video nếu muốn
         });
 
-        // Cho phép người dùng bấm vào để phát nếu trình duyệt chặn autoplay
-        video.addEventListener("error", () => {
-          document.body.addEventListener("click", () => {
-            video.play();
-          });
-        });
-      });
+        // Chụp ảnh
+        document.getElementById('capture-button').onclick = function () {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/png');
+            document.getElementById('photo-preview').innerHTML = '';
+            document.getElementById('photo-preview').appendChild(img);
+        };
+
+        // Quay video với âm thanh
+        document.getElementById('record-button').onclick = function() {
+            recordedChunks = [];
+            const canvasStream = canvas.captureStream(30); // 30 fps
+            const videoStream = video.captureStream(30); // Lấy stream video
+
+            // Thêm âm thanh từ video và microphone
+            if (mediaStreamDestination && mediaStreamDestination.stream) {
+                const audioTracks = mediaStreamDestination.stream.getAudioTracks();
+                audioTracks.forEach(track => canvasStream.addTrack(track));
+            }
+            videoStream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `recording-${Date.now()}.webm`;
+                link.click();
+            };
+            mediaRecorder.start();
+            document.getElementById('record-button').style.display = 'none';
+            document.getElementById('stop-button').style.display = 'inline';
+        };
+
+        document.getElementById('stop-button').onclick = function() {
+            mediaRecorder.stop();
+            document.getElementById('stop-button').style.display = 'none';
+            document.getElementById('record-button').style.display = 'inline';
+        };
     </script>
-  </body>
+</body>
 </html>
