@@ -33,7 +33,6 @@
           id="video1"
           src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4"
           preload="auto"
-          loop
           crossorigin="anonymous"
           webkit-playsinline
           playsinline
@@ -62,7 +61,40 @@
     </div>
 
     <script>
-      // Lấy đúng canvas mà A-Frame render
+      // === PRELOAD VIDEO NGAY KHI VÀO TRANG ===
+      document.addEventListener("DOMContentLoaded", () => {
+        const video = document.getElementById("video1");
+        // Gọi load() để chắc chắn video được fetch về
+        video.load();
+        // Trick: play-pause để buộc preload (nhiều trình duyệt chỉ load metadata nếu không làm vậy)
+        video.muted = true;
+        video.play().then(() => {
+          video.pause();
+          video.currentTime = 0;
+          video.muted = false;
+        }).catch(() => {
+          // Trình duyệt chặn autoplay, không sao cả
+        });
+
+        // Khi nhận diện marker thì chỉ cần video.play() và hiện ra ngay
+        const target = document.querySelector("#target");
+        target.addEventListener("targetFound", () => {
+          video.play();
+        });
+        target.addEventListener("targetLost", () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+        video.addEventListener("error", () => {
+          document.body.addEventListener("click", () => {
+            video.play();
+          });
+        });
+      });
+
+      // ==== QUAY VIDEO + ÂM THANH (camera+AR+video+mic) & CHỤP ẢNH ====
+
+      // Lấy đúng canvas của AR (A-Frame)
       function getARCanvas() {
         // A-Frame sẽ tạo canvas với class a-canvas
         return document.querySelector('canvas.a-canvas');
@@ -148,24 +180,6 @@
         document.getElementById('stop-button').style.display = 'none';
         document.getElementById('record-button').style.display = '';
       };
-
-      // Xử lý play/pause video AR khi nhận diện marker
-      document.addEventListener("DOMContentLoaded", () => {
-        const video = document.querySelector("#video1");
-        const target = document.querySelector("#target");
-        target.addEventListener("targetFound", () => {
-          video.play();
-        });
-        target.addEventListener("targetLost", () => {
-          video.pause();
-          video.currentTime = 0;
-        });
-        video.addEventListener("error", () => {
-          document.body.addEventListener("click", () => {
-            video.play();
-          });
-        });
-      });
     </script>
   </body>
 </html>
