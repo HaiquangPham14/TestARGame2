@@ -27,6 +27,8 @@
       renderer="colorManagement: true, physicallyCorrectLights"
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
+      embedded
+      video="facingMode: environment"
     >
       <a-assets>
         <video
@@ -61,22 +63,16 @@
     </div>
 
     <script>
-      // === PRELOAD VIDEO NGAY KHI VÀO TRANG ===
       document.addEventListener("DOMContentLoaded", () => {
         const video = document.getElementById("video1");
-        // Gọi load() để chắc chắn video được fetch về
         video.load();
-        // Trick: play-pause để buộc preload (nhiều trình duyệt chỉ load metadata nếu không làm vậy)
         video.muted = true;
         video.play().then(() => {
           video.pause();
           video.currentTime = 0;
           video.muted = false;
-        }).catch(() => {
-          // Trình duyệt chặn autoplay, không sao cả
-        });
+        }).catch(() => {});
 
-        // Khi nhận diện marker thì chỉ cần video.play() và hiện ra ngay
         const target = document.querySelector("#target");
         target.addEventListener("targetFound", () => {
           video.play();
@@ -92,15 +88,10 @@
         });
       });
 
-      // ==== QUAY VIDEO + ÂM THANH (camera+AR+video+mic) & CHỤP ẢNH ====
-
-      // Lấy đúng canvas của AR (A-Frame)
       function getARCanvas() {
-        // A-Frame sẽ tạo canvas với class a-canvas
         return document.querySelector('canvas.a-canvas');
       }
 
-      // Chụp ảnh
       document.getElementById('capture-button').onclick = function () {
         const canvas = getARCanvas();
         if (!canvas) {
@@ -113,14 +104,12 @@
         preview.innerHTML = '';
         preview.appendChild(img);
 
-        // Tải ảnh về máy
         const link = document.createElement('a');
         link.download = `screenshot-${Date.now()}.png`;
         link.href = img.src;
         link.click();
       };
 
-      // Quay video: hình từ canvas, tiếng từ video1 + micro
       let mediaRecorder, recordedChunks = [];
       let audioCtx, dest;
 
@@ -133,31 +122,29 @@
         recordedChunks = [];
         const canvasStream = canvas.captureStream(30);
 
-        // Lấy audio từ video1 và micro, trộn lại
         const videoElem = document.getElementById('video1');
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         dest = audioCtx.createMediaStreamDestination();
 
-        // Audio từ video
         const videoSource = audioCtx.createMediaElementSource(videoElem);
         videoSource.connect(dest);
         videoSource.connect(audioCtx.destination);
 
-        // Audio từ microphone
         try {
-          const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const micStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: { facingMode: "environment" }
+          });
           const micSource = audioCtx.createMediaStreamSource(micStream);
           micSource.connect(dest);
         } catch (err) {
           alert("Không thể truy cập micro: " + err.message);
         }
 
-        // Thêm audio track vào canvas stream
         dest.stream.getAudioTracks().forEach(track => {
           canvasStream.addTrack(track);
         });
 
-        // Record
         mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' });
         mediaRecorder.ondataavailable = function(event) {
           if (event.data.size > 0) recordedChunks.push(event.data);
