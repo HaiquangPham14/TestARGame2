@@ -141,13 +141,14 @@
 
       // === CHỨC NĂNG CHỤP ẢNH ===
       document.getElementById('capture-button').onclick = function () {
-        const canvas = document.querySelector('canvas.a-canvas');
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL('image/png');
-        
+        const canvas = getARCanvas();
+        if (!canvas) {
+          alert("Không tìm thấy canvas của AR!");
+          return;
+        }
         const link = document.createElement('a');
         link.download = `screenshot-${Date.now()}.png`;
-        link.href = img.src;
+        link.href = canvas.toDataURL('image/png');
         link.click();
       };
 
