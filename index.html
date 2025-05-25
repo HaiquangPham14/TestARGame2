@@ -2,21 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
   <title>mind-ar.js + video trigger + record</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.7/dist/mindar-image.prod.js"></script>
   <style>
-    #mindar-container { position: relative; width: 640px; height: 480px; }
-    #ar-video { position: absolute; top:0; left:0; z-index:2; width:640px; height:480px; display:none; }
-    #canvas { position: absolute; top:0; left:0; z-index:1; }
-    #controls { margin-top: 10px; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    #mindar-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    #ar-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: none;
+      object-fit: contain;
+    }
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+    }
+    #controls button {
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    #stop-button {
+      background-color: #f44336;
+    }
+    #photo-preview img {
+      max-width: 200px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="mindar-container">
-    <video id="ar-video" crossorigin="anonymous"></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
+    <video id="ar-video" crossorigin="anonymous" muted></video>
+    <canvas id="canvas"></canvas>
   </div>
   <div id="controls">
     <button id="capture-button">Chụp ảnh</button>
@@ -26,12 +76,25 @@
   </div>
   <script>
     const VIDEO_URL = "https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/Sapporo%20Premium%20Beer%20-%203-STEP%20POURING%2C%20THE%20EXCELLENCY%20OF%20SMOOTHNESS.mp4";
-    const MIND_FILE = "targets.mind"; 
+    const MIND_FILE = "targets.mind";
 
     const arVideo = document.getElementById('ar-video');
     arVideo.src = VIDEO_URL;
+    arVideo.muted = false;
 
-    // Mở camera
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let audioCtx, dest, source;
+
+    // Adjust canvas size to match container
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Open camera
     async function openCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -42,7 +105,7 @@
       }
     }
 
-    // mind-ar.js setup
+    // MindAR setup
     const mindar = new window.MINDAR.IMAGE.MindARThree({
       container: document.querySelector("#mindar-container"),
       imageTargetSrc: MIND_FILE,
@@ -52,16 +115,13 @@
     });
 
     const {renderer, scene, camera} = mindar;
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
     let detected = false;
 
     mindar.on("targetFound", () => {
       detected = true;
       arVideo.currentTime = 0;
       arVideo.style.display = "block";
-      arVideo.play();
+      arVideo.play().catch(e => console.error("Video play failed:", e));
     });
     mindar.on("targetLost", () => {
       detected = false;
@@ -75,13 +135,45 @@
       requestAnimationFrame(renderLoop);
     }
 
-    openCamera().then(() => {
+    // Mở camera ngay khi trang load
+    window.addEventListener('load', async () => {
+      await openCamera();  // Mở camera yêu cầu quyền
       mindar.start().then(() => {
         renderLoop();
       });
     });
 
-    // Chụp ảnh
+    // Initialize audio context for video
+    function initializeAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      dest = audioCtx.createMediaStreamDestination();
+      source = audioCtx.createMediaElementSource(arVideo);
+      source.connect(dest);
+      source.connect(audioCtx.destination);
+
+      // Resume AudioContext on user interaction (Safari requirement)
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume().then(() => {
+          console.log("AudioContext resumed");
+        }).catch(e => {
+          console.warn("Could not resume AudioContext:", e);
+        });
+      }
+    }
+
+    // Ensure AudioContext is resumed on user interaction
+    document.addEventListener('touchstart', function() {
+      if (!audioCtx) initializeAudio();
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().then(() => {
+          console.log("AudioContext resumed on user interaction");
+        }).catch(e => {
+          console.warn("Could not resume AudioContext on touch:", e);
+        });
+      }
+    }, { once: true });
+
+    // Capture photo
     document.getElementById('capture-button').onclick = function () {
       const img = document.createElement('img');
       img.src = canvas.toDataURL('image/png');
@@ -89,38 +181,84 @@
       document.getElementById('photo-preview').appendChild(img);
     };
 
-    // Quay video canvas + tiếng video
+    // Record video with audio
     let mediaRecorder, recordedChunks = [];
     document.getElementById('record-button').onclick = async function () {
       recordedChunks = [];
       const canvasStream = canvas.captureStream(30);
 
-      // Lấy audio từ video
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const dest = audioCtx.createMediaStreamDestination();
-      const source = audioCtx.createMediaElementSource(arVideo);
-      source.connect(dest);
-      source.connect(audioCtx.destination);
+      // Ensure audio context is initialized
+      if (!audioCtx) initializeAudio();
 
-      dest.stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
-      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+      // Add audio from video
+      if (dest && dest.stream) {
+        const audioTracks = dest.stream.getAudioTracks();
+        if (audioTracks.length > 0) {
+          audioTracks.forEach(track => canvasStream.addTrack(track));
+          console.log("Audio tracks added to recording");
+        } else {
+          console.log("No audio tracks available");
+        }
+      } else {
+        console.log("Audio destination not available");
+      }
 
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      // Try MP4 first for Safari, fallback to WebM
+      let mimeTypeOptions = [
+        'video/mp4;codecs=h264,mp4a.40.2', // MP4 with H.264 and AAC
+        'video/mp4',
+        'video/webm;codecs=vp8,opus', // WebM fallback
+        'video/webm'
+      ];
+
+      let selectedMimeType = null;
+      for (let mimeType of mimeTypeOptions) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+
+      if (!selectedMimeType) {
+        alert("Trình duyệt không hỗ trợ định dạng ghi video phù hợp.");
+        return;
+      }
+
+      try {
+        mediaRecorder = new MediaRecorder(canvasStream, { mimeType: selectedMimeType });
+      } catch (e) {
+        console.error("MediaRecorder initialization failed:", e);
+        alert("Không thể ghi video: " + e.message);
+        return;
+      }
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const isMp4 = selectedMimeType.includes('mp4');
+        const blob = new Blob(recordedChunks, { type: selectedMimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = 'ar-record.webm';
+        a.href = url;
+        a.download = `ar-record-${Date.now()}.${isMp4 ? 'mp4' : 'webm'}`;
         a.click();
       };
 
-      mediaRecorder.start();
-      document.getElementById('record-button').style.display = 'none';
-      document.getElementById('stop-button').style.display = '';
+      try {
+        mediaRecorder.start();
+        document.getElementById('record-button').style.display = 'none';
+        document.getElementById('stop-button').style.display = '';
+      } catch (e) {
+        console.error("MediaRecorder start failed:", e);
+        alert("Không thể bắt đầu ghi: " + e.message);
+      }
     };
 
     document.getElementById('stop-button').onclick = function () {
-      mediaRecorder.stop();
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
       document.getElementById('stop-button').style.display = 'none';
       document.getElementById('record-button').style.display = '';
     };
