@@ -79,7 +79,6 @@
       let mediaRecorder, recordedChunks = [];
       let audioCtx, dest;
       let realCameraStream;
-      let isUserInteracted = false;
 
       // === KHỞI TẠO CAMERA PHÍA SAU ===
       async function initializeRealCamera() {
@@ -106,37 +105,16 @@
 
         video.load();
 
-        const tryPlay = async () => {
-          try {
-            await video.play();
-            document.getElementById("loader").style.display = "none";
-          } catch (err) {
-            if (!isUserInteracted) {
-              document.getElementById("loader").innerHTML = "Chạm vào màn hình để bắt đầu";
-            }
-          }
-        };
-
-        // Sự kiện tương tác người dùng
-        document.body.addEventListener("click", async () => {
-          if (!isUserInteracted) {
-            isUserInteracted = true;
-            await tryPlay();
-          }
-        });
-
         target.addEventListener("targetFound", async () => {
-          // Chỉ phát video khi mã đã được quét
-          await video.play();
+            await video.play(); // Tự động phát video khi mã được quét
+            document.getElementById("loader").style.display = "none"; 
         });
 
         target.addEventListener("targetLost", () => {
-          video.pause();
-          video.currentTime = 0;
+            video.pause();
+            video.currentTime = 0;
+            document.getElementById("loader").style.display = "block"; 
         });
-
-        // Thử phát video lần đầu
-        await tryPlay();
       }
 
       // === CHỨC NĂNG CHỤP ẢNH ===
@@ -174,11 +152,9 @@
           ctx.drawImage(arCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
 
           // Tạo và tải ảnh
-          const img = document.createElement("img");
-          img.src = tempCanvas.toDataURL("image/png");
           const link = document.createElement("a");
           link.download = `screenshot-${Date.now()}.png`;
-          link.href = img.src;
+          link.href = tempCanvas.toDataURL("image/png");
           link.click();
         });
       };
