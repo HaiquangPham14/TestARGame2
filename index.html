@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>mind-ar.js + video trigger + record</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.7/dist/mindar-image.prod.js"></script>
   <style>
     #mindar-container { position: relative; width: 640px; height: 480px; }
@@ -28,6 +30,17 @@
 
     const arVideo = document.getElementById('ar-video');
     arVideo.src = VIDEO_URL;
+
+    // Mở camera
+    async function openCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        arVideo.srcObject = stream;
+      } catch (error) {
+        console.error("Error accessing the camera:", error);
+        alert("Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.");
+      }
+    }
 
     // mind-ar.js setup
     const mindar = new window.MINDAR.IMAGE.MindARThree({
@@ -62,8 +75,10 @@
       requestAnimationFrame(renderLoop);
     }
 
-    mindar.start().then(() => {
-      renderLoop();
+    openCamera().then(() => {
+      mindar.start().then(() => {
+        renderLoop();
+      });
     });
 
     // Chụp ảnh
