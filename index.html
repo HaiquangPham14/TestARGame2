@@ -50,7 +50,8 @@
     <script>
         const canvas = document.getElementById("unity-canvas");
         const arVideo = document.getElementById("ar-video");
-        const { createFFmpeg, fetchFile } = FFmpeg;
+        const createFFmpeg = FFmpeg.createFFmpeg;
+        const fetchFile = FFmpeg.fetchFile;
         const ffmpeg = createFFmpeg({ log: true });
 
         let mediaRecorder;
