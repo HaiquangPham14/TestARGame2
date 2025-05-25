@@ -20,11 +20,20 @@
             padding: 10px 15px;
             font-size: 16px;
         }
+        #ar-video {
+            display: none; /* Ẩn hoặc đặt overlay nếu muốn */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 320px; /* hoặc 100% tùy bạn */
+            z-index: 20;
+        }
     </style>
 </head>
 <body>
     <div id="unity-container" class="unity-desktop">
         <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+        <video id="ar-video" crossorigin="anonymous"></video>
         <div id="unity-loading-bar">
             <div id="unity-logo"></div>
             <div id="unity-progress-bar-empty">
@@ -45,29 +54,20 @@
     </div>
     <script>
         var canvas = document.querySelector("#unity-canvas");
+        var videoElem = document.getElementById("ar-video");
         var mediaRecorder;
         var recordedChunks = [];
         var audioContext;
         var mediaStreamDestination;
 
-        async function initializeAudioCapture() {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                mediaStreamDestination = audioContext.createMediaStreamDestination();
-
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const microphone = audioContext.createMediaStreamSource(stream);
-                microphone.connect(mediaStreamDestination);
-                
-                console.log("Audio capture initialized");
-            } catch (error) {
-                console.error("Error initializing audio capture:", error);
-                alert("Không thể truy cập âm thanh: " + error.message);
-            }
+        // Hàm này Unity sẽ gọi khi detect đúng marker!
+        function playARVideo(url) {
+            videoElem.src = url;
+            videoElem.currentTime = 0;
+            videoElem.style.display = 'block'; // hoặc overlay lên canvas
+            videoElem.play();
         }
-
-        // Initialize audio capture on page load
-        initializeAudioCapture();
+        // Trong Unity: gọi Application.ExternalCall("playARVideo", url);
 
         // Capture photo
         document.querySelector("#capture-button").onclick = function () {
@@ -79,45 +79,41 @@
             });
         };
 
-        // Record video with audio
+        // Record video with audio (canvas + audio từ video)
         document.querySelector("#record-button").onclick = async function() {
             recordedChunks = [];
-            
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { frameRate: 30 },
-                    audio: true 
-                });
-        
-                // Thêm audio từ microphone
-                if (mediaStreamDestination && mediaStreamDestination.stream) {
-                    const audioTracks = mediaStreamDestination.stream.getAudioTracks();
-                    audioTracks.forEach(track => stream.addTrack(track)); // Sử dụng stream thay vì canvasStream
-                    console.log("Audio tracks added to recording");
-                } else {
-                    console.log("No audio tracks available");
+            // Lấy stream của canvas
+            const canvasStream = canvas.captureStream(30);
+
+            // Tạo audio context và lấy audio từ videoElem
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            mediaStreamDestination = audioContext.createMediaStreamDestination();
+            const source = audioContext.createMediaElementSource(videoElem);
+            source.connect(mediaStreamDestination);
+            source.connect(audioContext.destination); // Để user nghe được
+
+            // Add audio track vào canvas stream
+            mediaStreamDestination.stream.getAudioTracks().forEach(track => {
+                canvasStream.addTrack(track);
+            });
+
+            // Record
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
                 }
-        
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }); // Sử dụng mp4 cho tương thích tốt hơn
-                mediaRecorder.ondataavailable = function(event) {
-                    if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-                mediaRecorder.onstop = function() {
-                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `recording-${Date.now()}.mp4`;
-                    link.click();
-                };
-                mediaRecorder.start();
-                document.querySelector("#record-button").style.display = 'none';
-                document.querySelector("#stop-button").style.display = 'inline';
-            } catch (error) {
-                console.error("Error accessing display media:", error);
-                alert("Không thể truy cập video: " + error.message);
-            }
+            };
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `recording-${Date.now()}.webm`;
+                link.click();
+            };
+            mediaRecorder.start();
+            document.querySelector("#record-button").style.display = 'none';
+            document.querySelector("#stop-button").style.display = 'inline';
         };
         
         document.querySelector("#stop-button").onclick = function() {
