@@ -48,6 +48,7 @@
           crossorigin="anonymous"
           webkit-playsinline
           playsinline
+          loop
         ></video>
       </a-assets>
 
@@ -103,10 +104,8 @@
         const video = document.getElementById("video1");
         const target = document.querySelector("#target");
 
-        // Tải video trước
         video.load();
 
-        // Xử lý autoplay
         const tryPlay = async () => {
           try {
             await video.play();
@@ -181,15 +180,10 @@
           link.download = `screenshot-${Date.now()}.png`;
           link.href = img.src;
           link.click();
-
-          // (Tùy chọn) Hiển thị preview (bỏ nếu không cần)
-          // const preview = document.getElementById("photo-preview");
-          // preview.innerHTML = "";
-          // preview.appendChild(img);
         });
       };
 
-      // === CHỨC NĂNG QUAY VIDEO ===
+      // === QUAY VIDEO ===
       document.getElementById("record-button").onclick = async function () {
         try {
           recordedChunks = [];
@@ -197,7 +191,7 @@
           const realCameraVideo = document.getElementById("real-camera-video");
           const arVideo = document.getElementById("video1");
 
-          // Tạo canvas tổng hợp
+          //canvas tổng hợp
           const combinedCanvas = document.createElement("canvas");
           combinedCanvas.width = arCanvas.width;
           combinedCanvas.height = arCanvas.height;
@@ -212,8 +206,8 @@
 
           // Kết nối âm thanh video AR
           const videoSource = audioCtx.createMediaElementSource(arVideo);
-          videoSource.connect(audioCtx.destination); // Phát ra loa
-          videoSource.connect(dest); // Gửi đến bản ghi
+          videoSource.connect(audioCtx.destination); 
+          videoSource.connect(dest); 
 
           // Âm thanh microphone
           const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
