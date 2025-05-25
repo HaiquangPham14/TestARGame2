@@ -1,190 +1,116 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | WebAR Sapporo</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <style>
-        #controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            gap: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-        }
-        #ar-video {
-            display: none; /* Ẩn hoặc đặt overlay nếu muốn */
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 320px; /* hoặc 100% tùy bạn */
-            z-index: 20;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>mind-ar.js + video trigger + record</title>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.7/dist/mindar-image.prod.js"></script>
+  <style>
+    #mindar-container { position: relative; width: 640px; height: 480px; }
+    #ar-video { position: absolute; top:0; left:0; z-index:2; width:640px; height:480px; display:none; }
+    #canvas { position: absolute; top:0; left:0; z-index:1; }
+    #controls { margin-top: 10px; }
+  </style>
 </head>
 <body>
-    <div id="unity-container" class="unity-desktop">
-        <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-        <video id="ar-video" crossorigin="anonymous"></video>
-        <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-                <div id="unity-progress-bar-full"></div>
-            </div>
-        </div>
-        <div id="unity-warning"></div>
-        <div id="unity-footer">
-            <div id="unity-logo-title-footer"></div>
-            <div id="unity-fullscreen-button"></div>
-            <div id="unity-build-title">WebAR Sapporo</div>
-        </div>
-    </div>
-    <div id="controls">
-        <button id="capture-button">Chụp Ảnh</button>
-        <button id="record-button">Bắt Đầu Quay</button>
-        <button id="stop-button" style="display: none;">Dừng Quay</button>
-    </div>
-    <script>
-        var canvas = document.querySelector("#unity-canvas");
-        var videoElem = document.getElementById("ar-video");
-        var mediaRecorder;
-        var recordedChunks = [];
-        var audioContext;
-        var mediaStreamDestination;
+  <div id="mindar-container">
+    <video id="ar-video" crossorigin="anonymous"></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+  </div>
+  <div id="controls">
+    <button id="capture-button">Chụp ảnh</button>
+    <button id="record-button">Bắt đầu quay</button>
+    <button id="stop-button" style="display:none;">Dừng quay</button>
+    <div id="photo-preview"></div>
+  </div>
+  <!-- mindar phải dùng .mind file làm target -->
+  <script>
+    const VIDEO_URL = "https://pub-a2cc4cd01cd142d9b13f2e0346176e83.r2.dev/Sapporo%20Premium%20Beer%20-%203-STEP%20POURING%2C%20THE%20EXCELLENCY%20OF%20SMOOTHNESS.mp4";
+    const MIND_FILE = "targets.mind"; // Đổi thành file .mind bạn tạo từ ảnh cần detect
 
-        // Hàm này Unity sẽ gọi khi detect đúng marker!
-        function playARVideo(url) {
-            videoElem.src = url;
-            videoElem.currentTime = 0;
-            videoElem.style.display = 'block'; // hoặc overlay lên canvas
-            videoElem.play();
-        }
-        // Trong Unity: gọi Application.ExternalCall("playARVideo", url);
+    const arVideo = document.getElementById('ar-video');
+    arVideo.src = VIDEO_URL;
 
-        // Capture photo
-        document.querySelector("#capture-button").onclick = function () {
-            requestAnimationFrame(() => {
-                var link = document.createElement('a');
-                link.download = `screenshot-${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
-        };
+    // mind-ar.js setup
+    const mindar = new window.MINDAR.IMAGE.MindARThree({
+      container: document.querySelector("#mindar-container"),
+      imageTargetSrc: MIND_FILE,
+      maxTrack: 1,
+      uiScanning: false,
+      uiLoading: "no",
+    });
 
-        // Record video with audio (canvas + audio từ video)
-        document.querySelector("#record-button").onclick = async function() {
-            recordedChunks = [];
-            // Lấy stream của canvas
-            const canvasStream = canvas.captureStream(30);
+    const {renderer, scene, camera} = mindar;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-            // Tạo audio context và lấy audio từ videoElem
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            mediaStreamDestination = audioContext.createMediaStreamDestination();
-            const source = audioContext.createMediaElementSource(videoElem);
-            source.connect(mediaStreamDestination);
-            source.connect(audioContext.destination); // Để user nghe được
+    let detected = false;
 
-            // Add audio track vào canvas stream
-            mediaStreamDestination.stream.getAudioTracks().forEach(track => {
-                canvasStream.addTrack(track);
-            });
+    mindar.on("targetFound", () => {
+      detected = true;
+      arVideo.currentTime = 0;
+      arVideo.style.display = "block";
+      arVideo.play();
+    });
+    mindar.on("targetLost", () => {
+      detected = false;
+      arVideo.pause();
+      arVideo.style.display = "none";
+    });
 
-            // Record
-            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-            mediaRecorder.onstop = function() {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `recording-${Date.now()}.webm`;
-                link.click();
-            };
-            mediaRecorder.start();
-            document.querySelector("#record-button").style.display = 'none';
-            document.querySelector("#stop-button").style.display = 'inline';
-        };
-        
-        document.querySelector("#stop-button").onclick = function() {
-            mediaRecorder.stop();
-            document.querySelector("#stop-button").style.display = 'none';
-            document.querySelector("#record-button").style.display = 'inline';
-        };
+    // Render loop: vẽ frame lên canvas (có thể dùng để chụp/quay)
+    async function renderLoop() {
+      renderer.render(scene, camera);
+      ctx.drawImage(renderer.domElement, 0, 0, canvas.width, canvas.height);
+      requestAnimationFrame(renderLoop);
+    }
 
-        function unityShowBanner(msg, type) {
-            var warningBanner = document.querySelector("#unity-warning");
-            function updateBannerVisibility() {
-                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-            }
-            var div = document.createElement('div');
-            div.innerHTML = msg;
-            warningBanner.appendChild(div);
-            if (type == 'error') div.style = 'background: red; padding: 10px;';
-            else {
-                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-                setTimeout(function() {
-                    warningBanner.removeChild(div);
-                    updateBannerVisibility();
-                }, 5000);
-            }
-            updateBannerVisibility();
-        }
+    mindar.start().then(() => {
+      renderLoop();
+    });
 
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/FinalWebAR.loader.js";
-        var config = {
-            arguments: [],
-            dataUrl: buildUrl + "/FinalWebAR.data",
-            frameworkUrl: buildUrl + "/FinalWebAR.framework.js",
-            codeUrl: buildUrl + "/FinalWebAR.wasm",
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "DefaultCompany",
-            productName: "WebAR Sapporo",
-            productVersion: "0.1.0",
-            showBanner: unityShowBanner,
-        };
+    // Chụp ảnh
+    document.getElementById('capture-button').onclick = function () {
+      const img = document.createElement('img');
+      img.src = canvas.toDataURL('image/png');
+      document.getElementById('photo-preview').innerHTML = '';
+      document.getElementById('photo-preview').appendChild(img);
+    };
 
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            var meta = document.createElement('meta');
-            meta.name = 'viewport';
-            meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-            document.getElementsByTagName('head')[0].appendChild(meta);
-            document.querySelector("#unity-container").className = "unity-mobile";
-            canvas.className = "unity-mobile";
-        } else {
-            canvas.style.width = "960px";
-            canvas.style.height = "600px";
-        }
+    // Quay video canvas + tiếng video
+    let mediaRecorder, recordedChunks = [];
+    document.getElementById('record-button').onclick = async function () {
+      recordedChunks = [];
+      const canvasStream = canvas.captureStream(30);
 
-        document.querySelector("#unity-loading-bar").style.display = "block";
+      // Lấy audio từ video
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = audioCtx.createMediaStreamDestination();
+      const source = audioCtx.createMediaElementSource(arVideo);
+      source.connect(dest);
+      source.connect(audioCtx.destination);
 
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-                document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                    unityInstance.SetFullscreen(1);
-                };
-            }).catch((message) => {
-                alert(message);
-            });
-        };
+      dest.stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
 
-        document.body.appendChild(script);
-    </script>
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'ar-record.webm';
+        a.click();
+      };
+
+      mediaRecorder.start();
+      document.getElementById('record-button').style.display = 'none';
+      document.getElementById('stop-button').style.display = '';
+    };
+
+    document.getElementById('stop-button').onclick = function () {
+      mediaRecorder.stop();
+      document.getElementById('stop-button').style.display = 'none';
+      document.getElementById('record-button').style.display = '';
+    };
+  </script>
 </body>
 </html>
