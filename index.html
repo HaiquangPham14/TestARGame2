@@ -82,8 +82,11 @@
         // Record video with audio
         document.querySelector("#record-button").onclick = function() {
             recordedChunks = [];
-            const canvasStream = canvas.captureStream(30); // 30 fps
-
+            //const canvasStream = canvas.captureStream(30); // 30 fps
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { frameRate: 30 },
+                audio: true 
+            });
             // Add audio Unity and microphone
             if (mediaStreamDestination && mediaStreamDestination.stream) {
                 const audioTracks = mediaStreamDestination.stream.getAudioTracks();
@@ -92,11 +95,8 @@
             } else {
                 console.log("No audio tracks available");
             }
-            //web sound
-            const audioStream = audioContext.createMediaStreamSource(mediaStreamDestination.stream);
-            audioStream.connect(audioContext.destination);
             
-            mediaRecorder = new MediaRecorder(canvasStream, audio: true , { mimeType: 'video/mp4' }); // Use WebM for better compatibility
+            mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/mp4' }); // Use WebM for better compatibility
             mediaRecorder.ondataavailable = function(event) {
                 if (event.data.size > 0) {
                     recordedChunks.push(event.data);
