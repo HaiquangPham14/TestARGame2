@@ -104,6 +104,7 @@
         const target = document.querySelector("#target");
 
         video.load();
+        video.play().catch(() => {});
 
         target.addEventListener("targetFound", async () => {
             await video.play(); // Tự động phát video khi mã được quét
@@ -239,9 +240,15 @@
 
       // === KHỞI TẠO ỨNG DỤNG ===
       document.addEventListener("DOMContentLoaded", async () => {
-        await initializeRealCamera();
-        await setupARVideo();
+      await initializeRealCamera();
+      await setupARVideo();
+
+      // Khi AR scene đã load xong, ẩn loader
+      const sceneEl = document.querySelector("a-scene");
+      sceneEl.addEventListener("loaded", () => {
+        document.getElementById("loader").style.display = "none";
       });
+    });
     </script>
 </body>
 </html>
