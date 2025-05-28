@@ -238,6 +238,7 @@
                 height="0.5625"
                 position="0 0 0"
                 rotation="0 0 0"
+                visible="false"
             ></a-video>
         </a-entity>
     </a-scene>
@@ -257,6 +258,7 @@
         let realCameraStream;
         let currentVideoElement;
         let selectedVideoId = null;
+        let isTargetVisible = false; // Theo dõi trạng thái target
 
         // === CẬP NHẬT TIẾN TRÌNH TẢI ===
         function updateProgress(progress, text) {
@@ -303,12 +305,14 @@
             
             // Sự kiện khi nhận diện được hình ảnh
             target.addEventListener("targetFound", () => {
-                // Hiển thị menu chọn video
+                isTargetVisible = true;
                 document.getElementById("video-selection").classList.remove("hidden");
             });
             
             // Sự kiện khi mất hình ảnh
             target.addEventListener("targetLost", () => {
+                isTargetVisible = false;
+                
                 // Dừng video hiện tại nếu có
                 if (currentVideoElement) {
                     currentVideoElement.pause();
@@ -320,17 +324,33 @@
                 
                 // Ẩn video plane
                 videoPlane.setAttribute("visible", "false");
+                
+                // Ẩn menu chọn video
+                document.getElementById("video-selection").classList.add("hidden");
             });
         }
 
         // === CHỌN VIDEO ===
         function selectVideo(videoId) {
+            // Chỉ cho phép chọn video nếu target vẫn hiển thị
+            if (!isTargetVisible) {
+                alert("Không thể chọn video khi không còn target. Vui lòng quét lại mã.");
+                document.getElementById("video-selection").classList.add("hidden");
+                return;
+            }
+            
             const videoElement = document.getElementById(videoId);
             const videoPlane = document.getElementById("video-plane");
             
             if (!videoElement) {
                 console.error("Không tìm thấy video:", videoId);
                 return;
+            }
+            
+            // Dừng video hiện tại nếu có
+            if (currentVideoElement) {
+                currentVideoElement.pause();
+                currentVideoElement.currentTime = 0;
             }
             
             // Đặt video đã chọn
@@ -387,6 +407,12 @@
         // === QUAY VIDEO ===
         async function startRecording() {
             try {
+                // Kiểm tra xem có video nào đang được chọn không
+                if (!currentVideoElement || !isTargetVisible) {
+                    alert("Vui lòng chọn video và đảm bảo target đang hiển thị trước khi quay");
+                    return;
+                }
+                
                 recordedChunks = [];
                 const arCanvas = document.querySelector("canvas.a-canvas");
                 const realCameraVideo = document.getElementById("real-camera-video");
@@ -409,12 +435,10 @@
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 dest = audioCtx.createMediaStreamDestination();
                 
-                // Kết nối âm thanh video AR nếu có
-                if (currentVideoElement) {
-                    const videoSource = audioCtx.createMediaElementSource(currentVideoElement);
-                    videoSource.connect(audioCtx.destination); 
-                    videoSource.connect(dest);
-                }
+                // Kết nối âm thanh video AR
+                const videoSource = audioCtx.createMediaElementSource(currentVideoElement);
+                videoSource.connect(audioCtx.destination); 
+                videoSource.connect(dest);
                 
                 // Âm thanh microphone
                 const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -439,7 +463,7 @@
                 
                 // Thiết lập recorder
                 mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: "video/webm; codecs=vp9,opus",
+                    mimeType: "video/mp4; codecs=vp9,opus",
                     videoBitsPerSecond: 2500000,
                     audioBitsPerSecond: 128000,
                 });
@@ -452,11 +476,11 @@
                 
                 mediaRecorder.onstop = () => {
                     isDrawing = false;
-                    const blob = new Blob(recordedChunks, { type: "video/webm" });
+                    const blob = new Blob(recordedChunks, { type: "video/mp4" });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
-                    a.download = `recording-${Date.now()}.webm`;
+                    a.download = `recording-${Date.now()}.mp4`;
                     a.click();
                 };
                 
