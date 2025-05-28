@@ -258,7 +258,9 @@
         let realCameraStream;
         let currentVideoElement;
         let selectedVideoId = null;
-        let isTargetVisible = false; // Theo dõi trạng thái target
+        let isTargetVisible = false;
+        let isDrawing = false;
+        let combinedCanvas, ctx;
 
         // === CẬP NHẬT TIẾN TRÌNH TẢI ===
         function updateProgress(progress, text) {
@@ -384,18 +386,18 @@
             const tempCanvas = document.createElement("canvas");
             tempCanvas.width = arCanvas.width;
             tempCanvas.height = arCanvas.height;
-            const ctx = tempCanvas.getContext("2d");
+            const tempCtx = tempCanvas.getContext("2d");
             
             // Vẽ video camera làm nền
             if (realCameraVideo.readyState >= realCameraVideo.HAVE_CURRENT_DATA) {
-                ctx.drawImage(realCameraVideo, 0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(realCameraVideo, 0, 0, tempCanvas.width, tempCanvas.height);
             } else {
-                ctx.fillStyle = "#000";
-                ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.fillStyle = "#000";
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
             }
             
             // Vẽ nội dung AR lên trên
-            ctx.drawImage(arCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(arCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
             
             // Tạo và tải ảnh
             const link = document.createElement("a");
@@ -404,7 +406,7 @@
             link.click();
         }
 
-        // === QUAY VIDEO ===
+        // === QUAY VIDEO (ĐÃ SỬA LỖI MIME TYPE) ===
         async function startRecording() {
             try {
                 // Kiểm tra xem có video nào đang được chọn không
@@ -422,11 +424,13 @@
                     return;
                 }
                 
-                // Tạo canvas tổng hợp
-                const combinedCanvas = document.createElement("canvas");
-                combinedCanvas.width = arCanvas.width;
-                combinedCanvas.height = arCanvas.height;
-                const ctx = combinedCanvas.getContext("2d");
+                // Tạo canvas tổng hợp nếu chưa có
+                if (!combinedCanvas) {
+                    combinedCanvas = document.createElement("canvas");
+                    combinedCanvas.width = arCanvas.width;
+                    combinedCanvas.height = arCanvas.height;
+                    ctx = combinedCanvas.getContext("2d");
+                }
                 
                 // Tạo stream từ canvas tổng hợp
                 const stream = combinedCanvas.captureStream(30);
@@ -449,11 +453,12 @@
                 dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
                 
                 // Vẽ khung hình
-                let isDrawing = true;
+                isDrawing = true;
                 function drawFrame() {
                     if (!isDrawing) return;
                     
                     if (!realCameraVideo.paused) {
+                        ctx.clearRect(0, 0, combinedCanvas.width, combinedCanvas.height);
                         ctx.drawImage(realCameraVideo, 0, 0, combinedCanvas.width, combinedCanvas.height);
                         ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
                     }
@@ -461,12 +466,33 @@
                 }
                 drawFrame();
                 
+                // Xác định MIME type được hỗ trợ
+                const supportedTypes = [
+                    'video/mp4;codecs=avc1,mp4a',
+                    'video/mp4'
+                ];
+                
+                let mimeType = '';
+                for (const type of supportedTypes) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        mimeType = type;
+                        break;
+                    }
+                }
+                
+                if (!mimeType) {
+                    alert("Trình duyệt không hỗ trợ ghi video. Vui lòng sử dụng Chrome hoặc Firefox.");
+                    return;
+                }
+                
                 // Thiết lập recorder
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: "video/mp4; codecs=avc1.42E01E, mp4a.40.2",
+                const options = {
+                    mimeType: mimeType,
                     videoBitsPerSecond: 2500000,
-                    audioBitsPerSecond: 128000,
-                });
+                    audioBitsPerSecond: 128000
+                };
+                
+                mediaRecorder = new MediaRecorder(stream, options);
                 
                 mediaRecorder.ondataavailable = (e) => {
                     if (e.data.size > 0) {
@@ -476,11 +502,17 @@
                 
                 mediaRecorder.onstop = () => {
                     isDrawing = false;
-                    const blob = new Blob(recordedChunks, { type: "video/mp4" });
+                    
+                    let fileExtension = 'mp4';
+                    if (mimeType.includes('mp4')) {
+                        fileExtension = 'mp4';
+                    }
+                    
+                    const blob = new Blob(recordedChunks, { type: mimeType });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
-                    a.download = `recording-${Date.now()}.mp4`;
+                    a.download = `recording-${Date.now()}.${fileExtension}`;
                     a.click();
                 };
                 
