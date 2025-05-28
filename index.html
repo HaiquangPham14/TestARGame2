@@ -182,6 +182,30 @@
         #real-camera-video {
             display: none;
         }
+        
+        #screenshot-canvas {
+            display: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            z-index: 1000;
+            animation: fadeInOut 3s forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 0; }
+            10% { opacity: 1; top: 20px; }
+            90% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 0; }
+        }
     </style>
 </head>
 <body>
@@ -244,6 +268,7 @@
     </a-scene>
 
     <video id="real-camera-video" autoplay playsinline class="hidden"></video>
+    <canvas id="screenshot-canvas" class="hidden"></canvas>
 
     <div id="controls">
         <button id="capture-button">Chụp ảnh</button>
@@ -261,6 +286,7 @@
         let isTargetVisible = false;
         let isDrawing = false;
         let combinedCanvas, ctx;
+        let arCanvas;
 
         // === CẬP NHẬT TIẾN TRÌNH TẢI ===
         function updateProgress(progress, text) {
@@ -374,70 +400,66 @@
 
         // === CHỨC NĂNG CHỤP ẢNH (ĐÃ SỬA) ===
         function capturePhoto() {
-            const arCanvas = document.querySelector("canvas.a-canvas");
+            // Kiểm tra xem có target đang hiển thị và video đang phát không
+            if (!isTargetVisible || !selectedVideoId) {
+                showNotification("Vui lòng quét mã và chọn video trước khi chụp ảnh");
+                return;
+            }
+            
+            // Lấy các phần tử cần thiết
+            arCanvas = document.querySelector("canvas.a-canvas");
             const realCameraVideo = document.getElementById("real-camera-video");
-            const videoPlane = document.getElementById("video-plane");
+            const screenshotCanvas = document.getElementById("screenshot-canvas");
             
-            if (!arCanvas || !realCameraVideo) {
-                alert("Không tìm thấy canvas hoặc video camera!");
+            if (!arCanvas || !realCameraVideo || !screenshotCanvas) {
+                showNotification("Không tìm thấy thành phần cần thiết!");
                 return;
             }
             
-            if (!isTargetVisible || !currentVideoElement || videoPlane.getAttribute("visible") !== "true") {
-                alert("Vui lòng quét mã và chọn video trước khi chụp ảnh!");
-                return;
-            }
-
-            // Đợi một frame để đảm bảo A-Frame đã render nội dung AR
-            requestAnimationFrame(() => {
-                // Tạo canvas tạm để chụp ảnh
-                const tempCanvas = document.createElement("canvas");
-                tempCanvas.width = arCanvas.width;
-                tempCanvas.height = arCanvas.height;
-                const tempCtx = tempCanvas.getContext("2d");
-
-                // Vẽ video camera làm nền
-                if (realCameraVideo.readyState >= realCameraVideo.HAVE_CURRENT_DATA) {
-                    tempCtx.drawImage(realCameraVideo, 0, 0, tempCanvas.width, tempCanvas.height);
-                } else {
-                    console.warn("Camera video không sẵn sàng, sử dụng nền đen");
-                    tempCtx.fillStyle = "#000";
-                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                }
-
-                // Đợi thêm một frame để đảm bảo AR được render
-                requestAnimationFrame(() => {
-                    // Vẽ nội dung AR lên trên
-                    tempCtx.drawImage(arCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
-
-                    // Kiểm tra xem arCanvas có chứa dữ liệu không
-                    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                    let isEmpty = true;
-                    for (let i = 0; i < imageData.data.length; i += 4) {
-                        if (imageData.data[i + 3] !== 0) { // Kiểm tra alpha channel
-                            isEmpty = false;
-                            break;
-                        }
-                    }
-                    if (isEmpty) {
-                        console.warn("Canvas AR trống, nội dung AR không được render");
-                    }
-
-                    // Tạo và tải ảnh
-                    const link = document.createElement("a");
-                    link.download = `screenshot-${Date.now()}.png`;
-                    link.href = tempCanvas.toDataURL("image/png");
-                    link.click();
-                });
-            });
+            // Cấu hình kích thước canvas
+            screenshotCanvas.width = arCanvas.width;
+            screenshotCanvas.height = arCanvas.height;
+            const ctx = screenshotCanvas.getContext("2d");
+            
+            // Vẽ video camera thực tế làm nền
+            ctx.drawImage(realCameraVideo, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+            
+            // Vẽ nội dung AR (bao gồm video đang phát) lên trên
+            ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+            
+            // Tạo và tải ảnh
+            const link = document.createElement("a");
+            link.download = `sapporo-ar-${Date.now()}.png`;
+            link.href = screenshotCanvas.toDataURL("image/png");
+            link.click();
+            
+            // Hiển thị thông báo thành công
+            showNotification("Đã chụp ảnh thành công!");
         }
 
-        // === QUAY VIDEO ===
+        // === HIỂN THỊ THÔNG BÁO ===
+        function showNotification(message) {
+            const existingNotification = document.querySelector(".notification");
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            const notification = document.createElement("div");
+            notification.className = "notification";
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // === QUAY VIDEO (ĐÃ SỬA LỖI DỪNG VIDEO) ===
         async function startRecording() {
             try {
                 // Kiểm tra xem có video nào đang được chọn không
                 if (!currentVideoElement || !isTargetVisible) {
-                    alert("Vui lòng chọn video và đảm bảo target đang hiển thị trước khi quay");
+                    showNotification("Vui lòng chọn video và đảm bảo target đang hiển thị");
                     return;
                 }
                 
@@ -446,7 +468,7 @@
                 const realCameraVideo = document.getElementById("real-camera-video");
                 
                 if (!arCanvas || !realCameraVideo) {
-                    alert("Thiếu thành phần để quay video");
+                    showNotification("Thiếu thành phần để quay video");
                     return;
                 }
                 
@@ -507,7 +529,7 @@
                 }
                 
                 if (!mimeType) {
-                    alert("Trình duyệt không hỗ trợ ghi video. Vui lòng sử dụng Chrome hoặc Firefox.");
+                    showNotification("Trình duyệt không hỗ trợ ghi video");
                     return;
                 }
                 
@@ -538,16 +560,27 @@
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
-                    a.download = `recording-${Date.now()}.${fileExtension}`;
+                    a.download = `sapporo-ar-recording-${Date.now()}.${fileExtension}`;
                     a.click();
+                    
+                    showNotification("Đã lưu video thành công!");
                 };
                 
                 mediaRecorder.start();
                 document.getElementById("record-button").classList.add("hidden");
                 document.getElementById("stop-button").classList.remove("hidden");
+                
+                // Đảm bảo video tiếp tục phát
+                if (currentVideoElement.paused) {
+                    currentVideoElement.play().catch(e => {
+                        console.error("Lỗi khi phát video:", e);
+                    });
+                }
+                
+                showNotification("Đang quay video...");
             } catch (error) {
                 console.error("Lỗi khi quay video:", error);
-                alert("Lỗi khi quay video: " + error.message);
+                showNotification("Lỗi khi quay video: " + error.message);
             }
         }
 
