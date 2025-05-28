@@ -104,7 +104,15 @@
         const target = document.querySelector("#target");
 
         video.load();
-        video.play().catch(() => {});
+        video.muted = true;
+        try {
+        await video.play();
+        video.pause();
+        video.currentTime = 0;
+        video.muted = false;
+        } catch (e) {
+        
+        }
 
         target.addEventListener("targetFound", async () => {
             await video.play(); // Tự động phát video khi mã được quét
