@@ -331,6 +331,7 @@
         let activeTargets = new Set();
         let micSource = null;
         let micStream = null;
+        let videoElements = [];
         
         // Danh sách URL video
         const videoUrls = [
@@ -388,36 +389,54 @@
             }
         }
         
-        // === TẢI TRƯỚC VIDEO ===
-        async function preloadVideos() {
-            const videoPromises = [];
+        // === TẢI VIDEO THEO KIỂU LAZY LOADING ===
+        async function lazyLoadVideos() {
+            updateProgress(50, "Đang tải video...");
             
+            // Tạo các phần tử video nhưng chưa tải nội dung
             for (let i = 0; i < 6; i++) {
                 const video = document.createElement("video");
                 video.id = `video${i}`;
-                video.setAttribute("preload", "auto");
+                video.setAttribute("preload", "metadata"); // Chỉ tải metadata
                 video.setAttribute("crossorigin", "anonymous");
                 video.setAttribute("webkit-playsinline", "");
                 video.setAttribute("playsinline", "");
                 video.setAttribute("loop", "");
                 video.setAttribute("muted", "");
-                video.src = videoUrls[i];
                 
                 // Thêm video vào a-assets
                 document.querySelector("a-assets").appendChild(video);
-                
-                // Tạo promise để theo dõi trạng thái tải
-                const promise = new Promise((resolve) => {
-                    video.addEventListener('loadeddata', resolve, { once: true });
-                    video.addEventListener('error', resolve, { once: true });
-                });
-                
-                videoPromises.push(promise);
+                videoElements.push(video);
             }
             
-            // Chờ tất cả video tải xong
-            await Promise.all(videoPromises);
-            updateProgress(70, "Video đã sẵn sàng");
+            // Tải video đầu tiên để đảm bảo trải nghiệm ban đầu
+            await loadVideo(0);
+            
+            // Tải các video khác trong nền
+            setTimeout(() => {
+                for (let i = 1; i < 6; i++) {
+                    loadVideo(i);
+                }
+            }, 1000);
+        }
+        
+        // === TẢI VIDEO KHI CẦN THIẾT ===
+        async function loadVideo(index) {
+            const video = videoElements[index];
+            if (!video || video.dataset.loaded) return;
+            
+            try {
+                video.src = videoUrls[index];
+                
+                // Chỉ tải đủ để bắt đầu phát
+                await new Promise((resolve) => {
+                    video.addEventListener('loadedmetadata', resolve, { once: true });
+                });
+                
+                video.dataset.loaded = true;
+            } catch (error) {
+                console.error(`Lỗi khi tải video ${index}:`, error);
+            }
         }
         
         // === THIẾT LẬP MULTI-TRACKING VỚI TƯƠNG TÁC CHẠM ===
@@ -425,14 +444,14 @@
             for (let i = 0; i < 6; i++) {
                 const target = document.getElementById(`target${i}`);
                 const videoPlane = document.getElementById(`video-plane${i}`);
-                const videoElement = document.getElementById(`video${i}`);
+                const videoElement = videoElements[i];
                 const tapToPlay = target.querySelector('.tap-to-play');
                 const loadingIndicator = document.getElementById(`loading-indicator${i}`);
                 
                 if (!target || !videoPlane || !videoElement || !tapToPlay || !loadingIndicator) continue;
                 
                 // Sự kiện khi nhận diện được hình ảnh
-                target.addEventListener("targetFound", () => {
+                target.addEventListener("targetFound", async () => {
                     activeTargets.add(i);
                     currentTargetIndex = i;
                     
@@ -440,9 +459,10 @@
                     videoPlane.setAttribute("visible", "true");
                     tapToPlay.classList.add('show');
                     
-                    // Hiển thị chỉ báo tải nếu video chưa sẵn sàng
-                    if (videoElement.readyState < 3) {
+                    // Tải video nếu chưa được tải
+                    if (!videoElement.dataset.loaded) {
                         loadingIndicator.classList.remove('hidden');
+                        await loadVideo(i);
                     }
                     
                     // Dừng video và đặt lại thời gian
@@ -768,9 +788,8 @@
                     return;
                 }
                 
-                // Tải trước các video
-                updateProgress(50, "Đang tải video...");
-                await preloadVideos();
+                // Tải video với lazy loading
+                await lazyLoadVideos();
                 
                 // Thiết lập multi-tracking
                 setupARTargets();
