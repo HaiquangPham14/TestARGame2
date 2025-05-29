@@ -370,6 +370,7 @@
         const PRESS_DURATION = 500; // 500ms để phân biệt chụp ảnh và quay video
         let currentTargetIndex = -1; // Mục tiêu đang được nhận diện
         let activeTargets = new Set(); // Danh sách mục tiêu đang hiển thị
+        let videosPreloaded = false;
         
         // === HIỂN THỊ THÔNG BÁO ===
         function showNotification(message) {
@@ -412,6 +413,25 @@
                 showNotification("Lỗi: Không thể truy cập camera/mic");
                 return false;
             }
+        }
+        
+        // === TẢI TRƯỚC VIDEO ===
+        function preloadVideos() {
+            updateProgress(50, "Đang tải trước video...");
+            
+            const videoPromises = [];
+            for (let i = 0; i < 6; i++) {
+                const video = document.getElementById(`video${i}`);
+                if (video) {
+                    const promise = new Promise((resolve) => {
+                        video.addEventListener('loadedmetadata', resolve);
+                        video.addEventListener('error', resolve);
+                    });
+                    videoPromises.push(promise);
+                }
+            }
+            
+            return Promise.all(videoPromises);
         }
         
         // === THIẾT LẬP MULTI-TRACKING VỚI TƯƠNG TÁC CHẠM ===
@@ -462,9 +482,12 @@
                         if (videoElement.paused) {
                             videoElement.play().catch(err => {
                                 console.error('Không thể phát video:', err);
+                                showNotification('Chạm lần nữa để phát video');
                             });
+                            tapToPlay.classList.remove('show');
                         } else {
                             videoElement.pause();
+                            tapToPlay.classList.add('show');
                         }
                     }
                 });
@@ -501,7 +524,7 @@
             showNotification("Đã chụp ảnh thành công!");
         }
         
-        // === QUAY VIDEO ===
+        // === QUAY VIDEO (KHÔNG GHI ÂM VIDEO) ===
         async function startRecording() {
             try {
                 // Kiểm tra nếu đang quay
@@ -525,17 +548,12 @@
                 // Tạo stream từ canvas tổng hợp
                 const stream = combinedCanvas.captureStream(30);
                 
-                // Xử lý âm thanh
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                dest = audioCtx.createMediaStreamDestination();
-                
-                // Kết nối âm thanh microphone
-                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const micSource = audioCtx.createMediaStreamSource(micStream);
-                micSource.connect(dest);
-                
-                // Kết hợp audio
-                dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
+                // CHỈ GHI ÂM MICROPHONE - KHÔNG GHI ÂM VIDEO
+                // Tạo stream âm thanh riêng
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioStream.getAudioTracks().forEach(track => {
+                    stream.addTrack(track);
+                });
                 
                 // Vẽ khung hình (video thực + AR content)
                 isDrawing = true;
@@ -589,11 +607,18 @@
                     isDrawing = false;
                     isRecording = false;
                     
+                    // Dừng tất cả các track
+                    stream.getTracks().forEach(track => track.stop());
+                    
                     const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
                     recordedVideoBlob = new Blob(recordedChunks, { type: mimeType });
                     
                     // Tải video ngay sau khi ghi xong
                     downloadRecordedVideo();
+                    
+                    // Cập nhật giao diện
+                    document.getElementById("camera-button").classList.remove("recording");
+                    document.getElementById("status-text").textContent = "Nhấn để chụp, giữ để quay video";
                 };
                 
                 mediaRecorder.start();
@@ -723,6 +748,10 @@
                     updateProgress(0, "Không thể kết nối camera/mic");
                     return;
                 }
+                
+                // Tải trước video
+                await preloadVideos();
+                updateProgress(70, "Video đã sẵn sàng");
                 
                 // Thiết lập multi-tracking
                 setupARTargets();
