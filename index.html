@@ -532,8 +532,7 @@
                 // Kết nối âm thanh microphone
                 const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const micSource = audioCtx.createMediaStreamSource(micStream);
-                //fix vọng âmâm
-                //micSource.connect(dest);
+                micSource.connect(dest);
                 
                 // Kết hợp audio
                 dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
