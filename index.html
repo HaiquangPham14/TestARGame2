@@ -202,7 +202,7 @@
 <body>
     <div id="loader">
         <div class="spinner"></div>
-        <h2>Đang tải ứng dụng...</h2>
+        <h2>Đang tải ứng dụng Sapporo AR...</h2>
         <p id="loading-text">Khởi tạo hệ thống AR</p>
         <div id="progress-container">
             <div id="progress-bar"></div>
@@ -232,6 +232,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video0"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator0" class="video-loading hidden">Đang tải video...</div>
@@ -246,6 +247,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video1"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator1" class="video-loading hidden">Đang tải video...</div>
@@ -260,6 +262,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video2"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator2" class="video-loading hidden">Đang tải video...</div>
@@ -274,6 +277,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video3"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator3" class="video-loading hidden">Đang tải video...</div>
@@ -288,6 +292,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video4"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator4" class="video-loading hidden">Đang tải video...</div>
@@ -302,6 +307,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video5"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
             <div id="loading-indicator5" class="video-loading hidden">Đang tải video...</div>
@@ -391,13 +397,13 @@
         
         // === TẢI VIDEO THEO KIỂU LAZY LOADING ===
         async function lazyLoadVideos() {
-            updateProgress(50, "Đang tải video...");
+            updateProgress(50, "Đang chuẩn bị video...");
             
             // Tạo các phần tử video nhưng chưa tải nội dung
             for (let i = 0; i < 6; i++) {
                 const video = document.createElement("video");
                 video.id = `video${i}`;
-                video.setAttribute("preload", "metadata"); // Chỉ tải metadata
+                video.setAttribute("preload", "metadata");
                 video.setAttribute("crossorigin", "anonymous");
                 video.setAttribute("webkit-playsinline", "");
                 video.setAttribute("playsinline", "");
@@ -413,11 +419,9 @@
             await loadVideo(0);
             
             // Tải các video khác trong nền
-            setTimeout(() => {
-                for (let i = 1; i < 6; i++) {
-                    loadVideo(i);
-                }
-            }, 1000);
+            for (let i = 1; i < 6; i++) {
+                setTimeout(() => loadVideo(i), i * 500); // Tải từng video cách nhau 500ms
+            }
         }
         
         // === TẢI VIDEO KHI CẦN THIẾT ===
@@ -428,14 +432,24 @@
             try {
                 video.src = videoUrls[index];
                 
-                // Chỉ tải đủ để bắt đầu phát
+                // Chờ cho video tải đủ metadata
                 await new Promise((resolve) => {
                     video.addEventListener('loadedmetadata', resolve, { once: true });
                 });
                 
+                // Đánh dấu video đã được tải
                 video.dataset.loaded = true;
+                
+                // Đặt sự kiện để tự động phát khi sẵn sàng
+                video.addEventListener('canplaythrough', () => {
+                    const indicator = document.getElementById(`loading-indicator${index}`);
+                    if (indicator) indicator.classList.add('hidden');
+                });
+                
             } catch (error) {
                 console.error(`Lỗi khi tải video ${index}:`, error);
+                const indicator = document.getElementById(`loading-indicator${index}`);
+                if (indicator) indicator.textContent = "Lỗi tải video";
             }
         }
         
@@ -464,10 +478,6 @@
                         loadingIndicator.classList.remove('hidden');
                         await loadVideo(i);
                     }
-                    
-                    // Dừng video và đặt lại thời gian
-                    videoElement.pause();
-                    videoElement.currentTime = 0;
                 });
                 
                 // Sự kiện khi mất hình ảnh
@@ -508,18 +518,6 @@
                             loadingIndicator.classList.remove('hidden');
                             showNotification('Video đang được tải, vui lòng đợi...');
                         }
-                    }
-                });
-                
-                // Sự kiện khi video đã sẵn sàng
-                videoElement.addEventListener('canplay', () => {
-                    loadingIndicator.classList.add('hidden');
-                });
-                
-                // Sự kiện khi video bắt đầu tải
-                videoElement.addEventListener('loadstart', () => {
-                    if (activeTargets.has(i)) {
-                        loadingIndicator.classList.remove('hidden');
                     }
                 });
             }
