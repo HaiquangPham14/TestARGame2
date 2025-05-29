@@ -637,8 +637,8 @@
                 
                 // Âm thanh microphone
                 const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const micSource = audioCtx.createMediaStreamSource(micStream);
-                micSource.connect(dest);
+                //const micSource = audioCtx.createMediaStreamSource(micStream);
+                //micSource.connect(dest);
                 
                 dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
                 
