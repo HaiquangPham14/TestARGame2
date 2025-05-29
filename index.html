@@ -278,7 +278,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
-                src="#video1"
+                src="#video0" <!-- Đã sửa thành video0 -->
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -292,7 +292,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
-                src="#video2"
+                src="#video1" <!-- Đã sửa thành video1 -->
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -306,7 +306,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
-                src="#video3"
+                src="#video2" <!-- Đã sửa thành video2 -->
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -320,9 +320,8 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
-                
+                src="#video3" <!-- Đã sửa thành video3 -->
             ></a-video>
-            
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
         
@@ -335,6 +334,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video4" <!-- Đã sửa thành video4 -->
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -348,6 +348,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video5" <!-- Đã sửa thành video5 -->
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -441,6 +442,12 @@
                     // Dừng video và đặt lại thời gian
                     videoElement.pause();
                     videoElement.currentTime = 0;
+                    
+                    // Đảm bảo video có thể phát
+                    videoElement.play().catch(err => {
+                        console.error('Không thể phát video:', err);
+                        showNotification('Không thể phát video');
+                    });
                 });
                 
                 // Sự kiện khi mất hình ảnh
@@ -467,6 +474,7 @@
                         if (videoElement.paused) {
                             videoElement.play().catch(err => {
                                 console.error('Không thể phát video:', err);
+                                showNotification('Không thể phát video');
                             });
                         } else {
                             videoElement.pause();
@@ -530,11 +538,11 @@
                 // Tạo stream từ canvas tổng hợp
                 const stream = combinedCanvas.captureStream(30);
                 
-                // Xử lý âm thanh
+                // Xử lý âm thanh - chỉ thu âm từ microphone
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 dest = audioCtx.createMediaStreamDestination();
                 
-                // Kết nối âm thanh microphone
+                // Chỉ thu âm từ microphone, không thu âm hệ thống
                 const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const micSource = audioCtx.createMediaStreamSource(micStream);
                 micSource.connect(dest);
@@ -646,6 +654,8 @@
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 mediaRecorder.stop();
+                document.getElementById("camera-button").classList.remove("recording");
+                document.getElementById("status-text").textContent = "Nhấn để chụp, giữ để quay video";
             }
         }
         
