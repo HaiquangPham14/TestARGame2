@@ -271,26 +271,28 @@
         <!-- 6 targets tương ứng với 6 video -->
         <a-entity id="target0" mindar-image-target="targetIndex: 0">
             <a-video
-                id="#video1"
+                id="video-plane0"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video1"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
         
         <a-entity id="target1" mindar-image-target="targetIndex: 1">
             <a-video
-                id="#video2"
+                id="video-plane1"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video2"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -304,6 +306,7 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                src="#video3"
             ></a-video>
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
@@ -317,7 +320,9 @@
                 rotation="0 0 0"
                 visible="false"
                 material="shader: flat;"
+                
             ></a-video>
+            
             <div class="tap-to-play">Chạm để phát video</div>
         </a-entity>
         
