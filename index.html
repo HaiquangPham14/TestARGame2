@@ -329,6 +329,8 @@
         const PRESS_DURATION = 500;
         let currentTargetIndex = -1;
         let activeTargets = new Set();
+        let micSource = null;
+        let micStream = null;
         
         // Danh sách URL video
         const videoUrls = [
@@ -360,25 +362,28 @@
         // === KHỞI TẠO CAMERA VÀ MICROPHONE ===
         async function initializeRealCamera() {
             try {
-                updateProgress(20, "Đang kết nối camera và mic...");
+                updateProgress(20, "Đang kết nối camera...");
                 
                 const video = document.getElementById("real-camera-video");
+                
+                // Chỉ yêu cầu camera khi khởi tạo
                 realCameraStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: "environment",
                         width: { ideal: 1280 },
                         height: { ideal: 720 },
                     },
-                    audio: true
+                    audio: false // Chỉ lấy video, không lấy audio
                 });
+                
                 video.srcObject = realCameraStream;
                 await video.play();
                 
-                updateProgress(40, "Camera và mic đã sẵn sàng");
+                updateProgress(40, "Camera đã sẵn sàng");
                 return true;
             } catch (error) {
-                console.error("Lỗi khi truy cập camera/mic:", error);
-                showNotification("Lỗi: Không thể truy cập camera/mic");
+                console.error("Lỗi khi truy cập camera:", error);
+                showNotification("Lỗi: Không thể truy cập camera");
                 return false;
             }
         }
@@ -395,7 +400,7 @@
                 video.setAttribute("webkit-playsinline", "");
                 video.setAttribute("playsinline", "");
                 video.setAttribute("loop", "");
-                video.setAttribute("muted", ""); // Thêm muted để có thể tự động phát
+                video.setAttribute("muted", "");
                 video.src = videoUrls[i];
                 
                 // Thêm video vào a-assets
@@ -554,13 +559,13 @@
                 // Tạo stream từ canvas tổng hợp
                 const stream = combinedCanvas.captureStream(30);
                 
-                // Xử lý âm thanh
+                // Xử lý âm thanh (chỉ khi bắt đầu quay)
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 dest = audioCtx.createMediaStreamDestination();
                 
-                // Kết nối âm thanh microphone
-                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const micSource = audioCtx.createMediaStreamSource(micStream);
+                // Kết nối âm thanh microphone (chỉ khi quay)
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micSource = audioCtx.createMediaStreamSource(micStream);
                 micSource.connect(dest);
                 
                 // Kết hợp audio
@@ -617,6 +622,16 @@
                 mediaRecorder.onstop = () => {
                     isDrawing = false;
                     isRecording = false;
+                    
+                    // Dừng và giải phóng microphone
+                    if (micSource) {
+                        micSource.disconnect();
+                        micSource = null;
+                    }
+                    if (micStream) {
+                        micStream.getTracks().forEach(track => track.stop());
+                        micStream = null;
+                    }
                     
                     const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
                     recordedVideoBlob = new Blob(recordedChunks, { type: mimeType });
@@ -746,10 +761,10 @@
                 // Cập nhật tiến trình
                 updateProgress(10, "Đang khởi tạo...");
                 
-                // Khởi tạo camera và microphone
+                // Khởi tạo camera (không có microphone)
                 const cameraReady = await initializeRealCamera();
                 if (!cameraReady) {
-                    updateProgress(0, "Không thể kết nối camera/mic");
+                    updateProgress(0, "Không thể kết nối camera");
                     return;
                 }
                 
