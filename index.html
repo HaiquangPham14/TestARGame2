@@ -5,7 +5,7 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        /* Giữ nguyên toàn bộ CSS của bạn */
+        /* Giữ nguyên toàn bộ CSS của bạn và thêm style cho target-selector */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -270,7 +270,6 @@
             margin-top: 10px;
         }
         
-        /* Thêm style cho target selector */
         .target-selector {
             position: fixed;
             top: 20px;
@@ -317,7 +316,6 @@
         </div>
     </div>
 
-    <!-- Thêm target selector -->
     <div id="target-selector" class="target-selector hidden">
         <button data-target="0" class="active">Target 1</button>
         <button data-target="1">Target 2</button>
@@ -398,7 +396,6 @@
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- Chỉ một target tại một thời điểm -->
         <a-entity id="target" mindar-image-target="targetIndex: 0">
             <a-video
                 id="video-plane"
@@ -555,14 +552,17 @@
             currentTargetIndex = index;
             const scene = document.getElementById("ar-scene");
             const videoPlane = document.getElementById("video-plane");
-            const target = document.getElementById("target");
             
             // Dừng video hiện tại
-            const currentVideo = document.getElementById(`video${currentTargetIndex}`);
-            if (currentVideo) {
-                currentVideo.pause();
-                currentVideo.currentTime = 0;
+            for (let i = 0; i < 6; i++) {
+                const videoElement = document.getElementById(`video${i}`);
+                if (videoElement) {
+                    videoElement.pause();
+                    videoElement.currentTime = 0;
+                }
             }
+            
+            // Cập nhật video plane
             videoPlane.setAttribute("visible", "false");
             videoPlane.setAttribute("src", `#video${index}`);
             
@@ -637,8 +637,8 @@
                 
                 // Âm thanh microphone
                 const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                //const micSource = audioCtx.createMediaStreamSource(micStream);
-                //micSource.connect(dest);
+                const micSource = audioCtx.createMediaStreamSource(micStream);
+                micSource.connect(dest);
                 
                 dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
                 
