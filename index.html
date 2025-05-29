@@ -212,6 +212,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
             <video
                 id="video1"
@@ -221,6 +222,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
             <video
                 id="video2"
@@ -230,6 +232,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
             <video
                 id="video3"
@@ -239,6 +242,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
             <video
                 id="video4"
@@ -248,6 +252,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
             <video
                 id="video5"
@@ -257,6 +262,7 @@
                 webkit-playsinline
                 playsinline
                 loop
+                muted
             ></video>
         </a-assets>
 
@@ -266,7 +272,6 @@
         <a-entity id="target0" mindar-image-target="targetIndex: 0">
             <a-video
                 id="video-plane0"
-                src="#video0"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -280,7 +285,6 @@
         <a-entity id="target1" mindar-image-target="targetIndex: 1">
             <a-video
                 id="video-plane1"
-                src="#video1"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -294,7 +298,6 @@
         <a-entity id="target2" mindar-image-target="targetIndex: 2">
             <a-video
                 id="video-plane2"
-                src="#video2"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -308,7 +311,6 @@
         <a-entity id="target3" mindar-image-target="targetIndex: 3">
             <a-video
                 id="video-plane3"
-                src="#video3"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -322,7 +324,6 @@
         <a-entity id="target4" mindar-image-target="targetIndex: 4">
             <a-video
                 id="video-plane4"
-                src="#video4"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -336,7 +337,6 @@
         <a-entity id="target5" mindar-image-target="targetIndex: 5">
             <a-video
                 id="video-plane5"
-                src="#video5"
                 width="1"
                 height="0.5625"
                 position="0 0 0"
@@ -361,7 +361,6 @@
         let mediaRecorder, recordedChunks = [];
         let audioCtx, dest;
         let realCameraStream;
-        let micStream;
         let isRecording = false;
         let isDrawing = false;
         let combinedCanvas, ctx;
@@ -369,8 +368,8 @@
         let isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         let pressTimer = null;
         const PRESS_DURATION = 500; // 500ms để phân biệt chụp ảnh và quay video
-        let currentTargetIndex = -1;
-        let activeTargets = new Set();
+        let currentTargetIndex = -1; // Mục tiêu đang được nhận diện
+        let activeTargets = new Set(); // Danh sách mục tiêu đang hiển thị
         
         // === HIỂN THỊ THÔNG BÁO ===
         function showNotification(message) {
@@ -425,17 +424,16 @@
                 
                 if (!target || !videoPlane || !videoElement || !tapToPlay) continue;
                 
-                // Gán video source cho a-video
-                videoPlane.setAttribute('src', `#video${i}`);
-                
                 // Sự kiện khi nhận diện được hình ảnh
                 target.addEventListener("targetFound", () => {
                     activeTargets.add(i);
                     currentTargetIndex = i;
                     
+                    // Hiển thị video plane và nhắc chạm
                     videoPlane.setAttribute("visible", "true");
                     tapToPlay.classList.add('show');
                     
+                    // Dừng video và đặt lại thời gian
                     videoElement.pause();
                     videoElement.currentTime = 0;
                 });
@@ -445,12 +443,14 @@
                     activeTargets.delete(i);
                     
                     if (currentTargetIndex === i) {
-                        currentTargetIndex = activeTargets.size > 0 ? Array.from(activeTargets)[0] : -1;
+                        currentTargetIndex = -1;
                     }
                     
+                    // Dừng video
                     videoElement.pause();
                     videoElement.currentTime = 0;
                     
+                    // Ẩn video plane và nhắc chạm
                     videoPlane.setAttribute("visible", "false");
                     tapToPlay.classList.remove('show');
                 });
@@ -460,15 +460,11 @@
                     e.preventDefault();
                     if (activeTargets.has(i)) {
                         if (videoElement.paused) {
-                            videoElement.play().then(() => {
-                                showNotification(`Phát video ${i + 1}`);
-                            }).catch(err => {
+                            videoElement.play().catch(err => {
                                 console.error('Không thể phát video:', err);
-                                showNotification("Cần tương tác để phát video");
                             });
                         } else {
                             videoElement.pause();
-                            showNotification(`Tạm dừng video ${i + 1}`);
                         }
                     }
                 });
@@ -486,24 +482,29 @@
                 return;
             }
             
+            // Cấu hình kích thước canvas
             screenshotCanvas.width = arCanvas.width;
             screenshotCanvas.height = arCanvas.height;
             const ctx = screenshotCanvas.getContext("2d");
             
+            // Vẽ video camera thực tế và AR content
             ctx.drawImage(realCameraVideo, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
             ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
             
+            // Tạo và tải ảnh
             const link = document.createElement("a");
             link.download = `sapporo-ar-${Date.now()}.png`;
             link.href = screenshotCanvas.toDataURL("image/png");
             link.click();
             
+            // Hiển thị thông báo thành công
             showNotification("Đã chụp ảnh thành công!");
         }
         
         // === QUAY VIDEO ===
         async function startRecording() {
             try {
+                // Kiểm tra nếu đang quay
                 if (isRecording) return;
                 
                 recordedChunks = [];
@@ -515,32 +516,28 @@
                     return;
                 }
                 
+                // Tạo canvas tổng hợp
                 combinedCanvas = document.createElement("canvas");
                 combinedCanvas.width = arCanvas.width;
                 combinedCanvas.height = arCanvas.height;
                 ctx = combinedCanvas.getContext("2d");
                 
+                // Tạo stream từ canvas tổng hợp
                 const stream = combinedCanvas.captureStream(30);
                 
+                // Xử lý âm thanh
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 dest = audioCtx.createMediaStreamDestination();
                 
-                // Âm thanh từ microphone
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Kết nối âm thanh microphone
+                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const micSource = audioCtx.createMediaStreamSource(micStream);
                 micSource.connect(dest);
                 
-                // Âm thanh từ video AR nếu đang phát
-                if (currentTargetIndex !== -1) {
-                    const currentVideo = document.getElementById(`video${currentTargetIndex}`);
-                    if (currentVideo && !currentVideo.paused) {
-                        const videoSource = audioCtx.createMediaElementSource(currentVideo);
-                        videoSource.connect(dest);
-                    }
-                }
-                
+                // Kết hợp audio
                 dest.stream.getAudioTracks().forEach((track) => stream.addTrack(track));
                 
+                // Vẽ khung hình (video thực + AR content)
                 isDrawing = true;
                 function drawFrame() {
                     if (!isDrawing) return;
@@ -554,6 +551,7 @@
                 }
                 drawFrame();
                 
+                // Xác định MIME type được hỗ trợ
                 const supportedTypes = [
                     'video/mp4;codecs=avc1,mp4a',
                     'video/mp4'
@@ -572,6 +570,7 @@
                     return;
                 }
                 
+                // Thiết lập recorder
                 const options = {
                     mimeType: mimeType,
                     videoBitsPerSecond: 2500000,
@@ -590,19 +589,17 @@
                     isDrawing = false;
                     isRecording = false;
                     
+                    const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
                     recordedVideoBlob = new Blob(recordedChunks, { type: mimeType });
-                    downloadRecordedVideo();
                     
-                    // Dừng mic stream sau khi quay xong
-                    if (micStream) {
-                        micStream.getTracks().forEach(track => track.stop());
-                        micStream = null;
-                    }
+                    // Tải video ngay sau khi ghi xong
+                    downloadRecordedVideo();
                 };
                 
                 mediaRecorder.start();
                 isRecording = true;
                 
+                // Cập nhật giao diện
                 document.getElementById("camera-button").classList.add("recording");
                 document.getElementById("status-text").textContent = "Đang quay...";
             } catch (error) {
@@ -621,17 +618,22 @@
             const filename = `sapporo-ar-recording-${Date.now()}.mp4`;
             const url = URL.createObjectURL(recordedVideoBlob);
             
+            // Tạo link tải
             const a = document.createElement("a");
             a.href = url;
             a.download = filename;
+            
+            // Thêm vào DOM để click hoạt động
             document.body.appendChild(a);
             a.click();
             
+            // Dọn dẹp sau khi tải
             setTimeout(() => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }, 100);
             
+            // Hiển thị thông báo
             showNotification("Đang tải video xuống...");
         }
         
@@ -646,13 +648,16 @@
         function setupCameraButton() {
             const cameraButton = document.getElementById('camera-button');
             
+            // Sự kiện khi bắt đầu nhấn
             cameraButton.addEventListener('touchstart', startPress);
             cameraButton.addEventListener('mousedown', startPress);
             
+            // Sự kiện khi kết thúc nhấn
             cameraButton.addEventListener('touchend', endPress);
             cameraButton.addEventListener('mouseup', endPress);
             cameraButton.addEventListener('mouseleave', cancelPress);
             
+            // Ngăn hành vi mặc định
             cameraButton.addEventListener('touchmove', (e) => {
                 if (isRecording) e.preventDefault();
             });
@@ -661,8 +666,10 @@
         function startPress(e) {
             e.preventDefault();
             
+            // Reset timer trước đó
             if (pressTimer) clearTimeout(pressTimer);
             
+            // Bắt đầu đếm thời gian giữ
             pressTimer = setTimeout(() => {
                 startRecording();
             }, PRESS_DURATION);
@@ -671,10 +678,13 @@
         function endPress(e) {
             e.preventDefault();
             
+            // Nếu timer đang hoạt động -> chụp ảnh
             if (pressTimer && !isRecording) {
                 clearTimeout(pressTimer);
                 capturePhoto();
-            } else if (isRecording) {
+            } 
+            // Nếu đang quay video -> dừng quay
+            else if (isRecording) {
                 stopRecording();
             }
             
@@ -704,17 +714,23 @@
         // === KHỞI TẠO ỨNG DỤNG ===
         document.addEventListener("DOMContentLoaded", async () => {
             try {
+                // Cập nhật tiến trình
                 updateProgress(10, "Đang khởi tạo...");
                 
+                // Khởi tạo camera và microphone
                 const cameraReady = await initializeRealCamera();
                 if (!cameraReady) {
                     updateProgress(0, "Không thể kết nối camera/mic");
                     return;
                 }
                 
+                // Thiết lập multi-tracking
                 setupARTargets();
+                
+                // Thiết lập nút TikTok-style
                 setupCameraButton();
                 
+                // Tự động ẩn loader sau 1.5 giây
                 setTimeout(() => {
                     document.getElementById("loader").classList.add("hidden");
                 }, 1500);
