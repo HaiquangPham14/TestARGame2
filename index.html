@@ -4,9 +4,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    
     <style>
-         body {
+        body {
             margin: 0;
             padding: 0;
             background: #191a1d;
@@ -104,6 +103,48 @@
             font-weight: bold;
         }
         
+        /* QUAN TRỌNG: CSS cho nút camera bị thiếu */
+        #camera-button-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        #camera-button {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fff8e1;
+            box-shadow: 0 0 0 4px #f5c242;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        #camera-button.recording {
+            box-shadow: 0 0 0 4px #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+        
+        #status-text {
+            color: #fffde4;
+            font-size: 14px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(7px);
+            box-shadow: 0 2px 16px 0 rgba(245,194,66,0.06);
+        }
+        
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -123,6 +164,11 @@
             
             .loading-subtitle {
                 font-size: 14px;
+            }
+            
+            #camera-button {
+                width: 60px;
+                height: 60px;
             }
         }
         
@@ -144,6 +190,15 @@
             
             .progress-container {
                 height: 4px;
+            }
+            
+            #camera-button {
+                width: 50px;
+                height: 50px;
+            }
+            
+            #status-text {
+                font-size: 12px;
             }
         }
     </style>
@@ -188,7 +243,7 @@
             <div id="loading-status" class="loading-percentage">0%</div>
         </div>
     </div>
-
+    
     <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/targets2.mind;"
         color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true"
         vr-mode-ui="enabled: false"
@@ -607,9 +662,9 @@
         const totalVideos = videos.length;
         
         function updateProgress() {
-            const progress = Math.round((loadedCount / totalVideos) * 100);
+            const progress = (loadedCount / totalVideos) * 100;
             loadingBar.style.width = `${progress}%`;
-            loadingStatus.textContent = `${progress}%`;
+            loadingStatus.textContent = `${loadedCount}/6`;
             
             if (loadedCount === totalVideos) {
                 setTimeout(() => {
