@@ -1,4 +1,4 @@
-       <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -6,7 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
-        body {
+         body {
             margin: 0;
             padding: 0;
             background: #191a1d;
@@ -104,48 +104,6 @@
             font-weight: bold;
         }
         
-        /* QUAN TRỌNG: CSS cho nút camera bị thiếu */
-        #camera-button-container {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        #camera-button {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #fff8e1;
-            box-shadow: 0 0 0 4px #f5c242;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-        
-        #camera-button.recording {
-            box-shadow: 0 0 0 4px #ff0000;
-            background: rgba(255, 0, 0, 0.2);
-        }
-        
-        #status-text {
-            color: #fffde4;
-            font-size: 14px;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 5px 12px;
-            border-radius: 20px;
-            backdrop-filter: blur(7px);
-            box-shadow: 0 2px 16px 0 rgba(245,194,66,0.06);
-        }
-        
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -165,11 +123,6 @@
             
             .loading-subtitle {
                 font-size: 14px;
-            }
-            
-            #camera-button {
-                width: 60px;
-                height: 60px;
             }
         }
         
@@ -192,19 +145,32 @@
             .progress-container {
                 height: 4px;
             }
-            
-            #camera-button {
-                width: 50px;
-                height: 50px;
-            }
-            
-            #status-text {
-                font-size: 12px;
-            }
         }
     </style>
 </head>
 <body>
+    <!-- Loading screen: Beer bottle animation, glow, bubble and progress bar -->
+    <!-- <div id="loading-screen">
+        <div class="beer-loader-container">
+            <div class="beer-shadow"></div>
+            <div class="beer-bubbles">
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+            </div>
+            <div class="glow-effect">
+                <div class="glow"></div>
+                <div class="glow"></div>
+            </div>
+            <img class="beer-bottle" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" alt="beer bottle" />
+        </div>
+        <h1>Đang tải dữ liệu Sapporo AR...</h1>
+        <div id="loading-bar-container">
+            <div id="loading-bar"></div>
+        </div>
+        <div id="loading-status"></div>
+    </div> -->
     <div id="loading-screen">
         <div id="particles-js"></div>
         <div class="loading-content">
@@ -280,107 +246,110 @@
     let arScene;
     let activeVideos = new Set();
 
+    // Initialize app
     document.addEventListener("DOMContentLoaded", function() {
-        // Khởi tạo particles.js
-        if (typeof particlesJS !== 'undefined') {
-            particlesJS('particles-js', {
-                "particles": {
-                    "number": {
-                        "value": 80,
-                        "density": {
-                            "enable": true,
-                            "value_area": 800
-                        }
-                    },
-                    "color": {
-                        "value": "#f5c242"
-                    },
-                    "shape": {
-                        "type": "circle",
-                        "stroke": {
-                            "width": 0,
-                            "color": "#000000"
-                        }
-                    },
-                    "opacity": {
-                        "value": 0.5,
-                        "random": true,
-                        "anim": {
-                            "enable": true,
-                            "speed": 1,
-                            "opacity_min": 0.1,
-                            "sync": false
-                        }
-                    },
-                    "size": {
-                        "value": 3,
-                        "random": true,
-                        "anim": {
-                            "enable": true,
-                            "speed": 2,
-                            "size_min": 0.1,
-                            "sync": false
-                        }
-                    },
-                    "line_linked": {
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
                         "enable": true,
-                        "distance": 150,
-                        "color": "#f5c242",
-                        "opacity": 0.3,
-                        "width": 1
-                    },
-                    "move": {
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#f5c242"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": true,
+                    "anim": {
                         "enable": true,
                         "speed": 1,
-                        "direction": "none",
-                        "random": true,
-                        "straight": false,
-                        "out_mode": "out",
-                        "bounce": false,
-                        "attract": {
-                            "enable": true,
-                            "rotateX": 600,
-                            "rotateY": 1200
-                        }
+                        "opacity_min": 0.1,
+                        "sync": false
                     }
                 },
-                "interactivity": {
-                    "detect_on": "canvas",
-                    "events": {
-                        "onhover": {
-                            "enable": true,
-                            "mode": "grab"
-                        },
-                        "onclick": {
-                            "enable": true,
-                            "mode": "push"
-                        },
-                        "resize": true
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 2,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#f5c242",
+                    "opacity": 0.3,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 1,
+                    "direction": "none",
+                    "random": true,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": true,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
                     },
-                    "modes": {
-                        "grab": {
-                            "distance": 140,
-                            "line_linked": {
-                                "opacity": 0.8
-                            }
-                        },
-                        "push": {
-                            "particles_nb": 4
-                        }
-                    }
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
                 },
-                "retina_detect": true
-            });
-        } else {
-            console.warn("particlesJS not loaded, skipping particle effect");
-        }
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 0.8
+                        }
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    }
+                }
+            },
+            "retina_detect": true
+        });
         
-        // Khởi tạo ứng dụng
+        // Phần script loading giữ nguyên, chỉ cập nhật hàm setupLoading()
         setupCameraButton();
         setupLoading();
         setupARScene();
         setupRealCamera();
     });
+    //
+    // document.addEventListener("DOMContentLoaded", () => {
+    //     setupCameraButton();
+    //     setupLoading();
+    //     setupARScene();
+    //     setupRealCamera();
+    // });
 
     function setupCameraButton() {
         const btn = document.getElementById('camera-button');
@@ -430,6 +399,7 @@
     function setupARScene() {
         arScene = document.querySelector('a-scene');
         
+        // Wait for scene to be ready
         arScene.addEventListener('loaded', () => {
             console.log('AR Scene loaded');
             setupTargetEvents();
@@ -437,6 +407,7 @@
     }
 
     function setupTargetEvents() {
+        // Setup target found/lost events for each video
         for (let i = 0; i < 6; i++) {
             const target = document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`);
             const video = document.getElementById(`video${i}`);
@@ -487,6 +458,7 @@
         const arCanvas = arScene.renderer.domElement;
 
         requestAnimationFrame(() => {
+            // Set canvas size to match AR canvas
             screenshotCanvas.width = arCanvas.width;
             screenshotCanvas.height = arCanvas.height;
             const ctx = screenshotCanvas.getContext('2d');
@@ -496,6 +468,7 @@
             // Draw the AR content on top
             ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
 
+            // Download the image
             const link = document.createElement('a');
             link.download = `sapporo-ar-${Date.now()}.png`;
             link.href = screenshotCanvas.toDataURL('image/png');
@@ -508,110 +481,113 @@
         });
     }
 
-    const videoAudioSources = new Map();
+        const videoAudioSources = new Map();
 
-    function getOrCreateMediaSourceFor(video, audioContext) {
-        if (videoAudioSources.has(video)) return videoAudioSources.get(video);
-        const src = audioContext.createMediaElementSource(video);
-        videoAudioSources.set(video, src);
-        return src;
-    }
-
-    function startRecording() {
-        const realCamera = document.getElementById("real-camera-video");
-        if (!arScene || !arScene.renderer || !arScene.renderer.domElement || !realCamera.videoWidth) {
-            alert("Chưa sẵn sàng, thử lại sau!");
-            return;
+        function getOrCreateMediaSourceFor(video, audioContext) {
+            if (videoAudioSources.has(video)) return videoAudioSources.get(video);
+            const src = audioContext.createMediaElementSource(video);
+            videoAudioSources.set(video, src);
+            return src;
         }
-        const arCanvas = arScene.renderer.domElement;
 
-        const combinedCanvas = document.createElement("canvas");
-        combinedCanvas.width = arCanvas.width;
-        combinedCanvas.height = arCanvas.height;
-        const ctx = combinedCanvas.getContext("2d");
+        function startRecording() {
+            const realCamera = document.getElementById("real-camera-video");
+            if (!arScene || !arScene.renderer || !arScene.renderer.domElement || !realCamera.videoWidth) {
+                alert("Chưa sẵn sàng, thử lại sau!");
+                return;
+            }
+            const arCanvas = arScene.renderer.domElement;
 
-        const videoStream = combinedCanvas.captureStream(30);
+            // Tạo canvas tạm để vẽ frame ghép
+            const combinedCanvas = document.createElement("canvas");
+            combinedCanvas.width = arCanvas.width;
+            combinedCanvas.height = arCanvas.height;
+            const ctx = combinedCanvas.getContext("2d");
 
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const destination = audioContext.createMediaStreamDestination();
+            const videoStream = combinedCanvas.captureStream(30);
 
-        let hasAudio = false;
-        activeVideos.forEach(video => {
-            if (!video.paused && !video.muted) {
-                try {
-                    const src = getOrCreateMediaSourceFor(video, audioContext);
-                    src.connect(destination);              
-                    src.connect(audioContext.destination); 
-                    hasAudio = true;
-                } catch (e) {
-                    console.log('Audio connection error:', e);
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const destination = audioContext.createMediaStreamDestination();
+
+            let hasAudio = false;
+            activeVideos.forEach(video => {
+                if (!video.paused && !video.muted) {
+                    try {
+                        const src = getOrCreateMediaSourceFor(video, audioContext);
+                        src.connect(destination);              
+                        src.connect(audioContext.destination); 
+                        hasAudio = true;
+                    } catch (e) {
+                        console.log('Audio connection error:', e);
+                    }
                 }
+            });
+
+            // Tổng hợp track video + audio
+            const tracks = [...videoStream.getVideoTracks()];
+            if (hasAudio) tracks.push(...destination.stream.getAudioTracks());
+            const finalStream = new MediaStream(tracks);
+
+            let options = { mimeType: 'video/webm' };
+            if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E,mp4a.40.2')) {
+                options.mimeType = 'video/mp4;codecs=avc1.42E01E,mp4a.40.2';
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                options.mimeType = 'video/webm;codecs=vp9';
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
+                options.mimeType = 'video/webm;codecs=vp8';
             }
-        });
 
-        // Combine video and audio streams
-        const tracks = [...videoStream.getVideoTracks()];
-        if (hasAudio) tracks.push(...destination.stream.getAudioTracks());
-        const finalStream = new MediaStream(tracks);
-
-        let options = { mimeType: 'video/webm' };
-        if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E,mp4a.40.2')) {
-            options.mimeType = 'video/mp4;codecs=avc1.42E01E,mp4a.40.2';
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-            options.mimeType = 'video/webm;codecs=vp9';
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-            options.mimeType = 'video/webm;codecs=vp8';
-        }
-
-        try {
-            mediaRecorder = new MediaRecorder(finalStream, options);
-        } catch (e) {
-            alert('Không thể bắt đầu quay video. Vui lòng thử lại!');
-            return;
-        }
-
-        recordedChunks = [];
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                recordedChunks.push(event.data);
+            try {
+                mediaRecorder = new MediaRecorder(finalStream, options);
+            } catch (e) {
+                alert('Không thể bắt đầu quay video. Vui lòng thử lại!');
+                return;
             }
-        };
 
-        mediaRecorder.onstop = () => {
-            const outType = options.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
-            const ext = outType === 'video/mp4' ? 'mp4' : 'webm';
-            const blob = new Blob(recordedChunks, { type: outType });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `sapporo-ar-${Date.now()}.${ext}`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
             recordedChunks = [];
-            if (audioContext && audioContext.state !== 'closed') audioContext.close();
-        };
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
 
-        mediaRecorder.start();
-        isRecording = true;
+            mediaRecorder.onstop = () => {
+                const outType = options.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+                const ext = outType === 'video/mp4' ? 'mp4' : 'webm';
+                const blob = new Blob(recordedChunks, { type: outType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `sapporo-ar-${Date.now()}.${ext}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                recordedChunks = [];
+                if (audioContext && audioContext.state !== 'closed') audioContext.close();
+            };
 
-        function drawFrame() {
-            if (!isRecording) return;
-            ctx.drawImage(realCamera, 0, 0, combinedCanvas.width, combinedCanvas.height);
-            ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
-            requestAnimationFrame(drawFrame);
+            // Start recording
+            mediaRecorder.start();
+            isRecording = true;
+
+            // Draw frames liên tục
+            function drawFrame() {
+                if (!isRecording) return;
+                ctx.drawImage(realCamera, 0, 0, combinedCanvas.width, combinedCanvas.height);
+                ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
+                requestAnimationFrame(drawFrame);
+            }
+
+            drawFrame();
         }
 
-        drawFrame();
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+            }
         }
-    }
 
     function setupLoading() {
         const loadingScreen = document.getElementById('loading-screen');
@@ -636,13 +612,15 @@
             loadingStatus.textContent = `${progress}%`;
             
             if (loadedCount === totalVideos) {
-                loadingStatus.textContent = 'Hoàn tất! Đang khởi tạo AR...';
                 setTimeout(() => {
-                    loadingScreen.style.opacity = '0';
+                    loadingStatus.textContent = 'Hoàn tất! Đang khởi tạo AR...';
                     setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                    }, 500);
-                }, 800);
+                        loadingScreen.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                        }, 500);
+                    }, 800);
+                }, 500);
             }
         }
         
