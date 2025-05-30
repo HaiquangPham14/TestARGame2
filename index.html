@@ -100,45 +100,29 @@
             object-fit: cover;
             border-radius: 50%;
             animation: 
-                zoomInOut 1.5s infinite alternate ease-in-out, 
-                rotate3d 8s infinite linear,
-                colorShift 12s infinite alternate;
+                zoomInOut 0.5s infinite alternate ease-in-out, 
+                rotate3d 8s infinite linear;
             box-shadow: 
                 0 0 30px rgba(255, 50, 80, 0.5),
                 0 0 60px rgba(100, 150, 255, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.1);
             transform-style: preserve-3d;
         }
-        
-        /* Hiệu ứng phóng to thu nhỏ nhanh hơn */
+
+        /* Hiệu ứng phóng to thu nhỏ */
         @keyframes zoomInOut {
             0%, 100% { 
-                transform: scale(0.85) rotate(0deg); 
+                transform: scale(1); /* Đặt về kích thước gốc */
                 box-shadow: 
                     0 0 20px rgba(255, 50, 80, 0.7),
                     0 0 40px rgba(100, 150, 255, 0.4);
             }
             50% { 
-                transform: scale(1.15) rotate(5deg); 
+                transform: scale(1.1); /* Phóng to nhẹ */
                 box-shadow: 
                     0 0 40px rgba(255, 50, 80, 0.9),
                     0 0 80px rgba(100, 150, 255, 0.6);
             }
-        }
-        
-        /* Hiệu ứng 3D xoay */
-        @keyframes rotate3d {
-            0% { transform: rotateY(0deg) rotateX(0deg); }
-            25% { transform: rotateY(15deg) rotateX(5deg); }
-            50% { transform: rotateY(0deg) rotateX(10deg); }
-            75% { transform: rotateY(-15deg) rotateX(5deg); }
-            100% { transform: rotateY(0deg) rotateX(0deg); }
-        }
-        
-        /* Hiệu ứng chuyển màu */
-        @keyframes colorShift {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
         }
         
         .particle {
@@ -296,7 +280,7 @@
         <div class="background-particles" id="particles"></div>
         <div class="loading-content">
             <h1 class="loading-title">SAPPORO AR EXPERIENCE</h1>
-            <p class="loading-subtitle">Đang khởi tạo thực tế ảo tăng cường...</p>
+            <p class="loading-subtitle">Đang khởi tạo ...</p>
             
             <div class="logo-container">
                 <img src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" class="logo" alt="Sapporo Logo">
@@ -565,7 +549,7 @@
             
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'video/mp4;codecs=vp9'
+                mimeType: 'video/webm;codecs=vp9'
             });
             
             mediaRecorder.ondataavailable = e => {
@@ -575,11 +559,11 @@
             };
             
             mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `sapporo-video-${Date.now()}.mp4`;
+                a.download = `sapporo-video-${Date.now()}.webm`;
                 a.click();
                 URL.revokeObjectURL(url);
                 
@@ -591,7 +575,7 @@
             
             // Cập nhật giao diện
             document.getElementById('camera-button').classList.add('recording');
-            document.getElementById('status-text').textContent = "Đang quay... Thả để dừng";
+            document.getElementById('status-text').textContent = "Đang quay... Nhấn để dừng";
             
             // Hiển thị bộ đếm thời gian
             const timer = document.getElementById('recording-timer');
