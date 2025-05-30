@@ -5,6 +5,24 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
+<<<<<<< HEAD
+        body {
+            margin: 0;
+            padding: 0;
+            background: #191a1d;
+        }
+=======
+        /* Reset và base styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: white;
+        }
+        
+>>>>>>> c6418ca3f9ad5d3d2c4c87a86708aeb61439ea4d
         #camera-button-container {
             position: fixed;
             bottom: 30px;
@@ -16,41 +34,514 @@
             align-items: center;
             gap: 15px;
         }
-        
         #camera-button {
             width: 70px;
             height: 70px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 0 4px #ff3250;
+            border: 2px solid #fff8e1;
+            box-shadow: 0 0 0 4px #f5c242;
             cursor: pointer;
             outline: none;
             transition: all 0.2s ease;
             position: relative;
         }
+<<<<<<< HEAD
+=======
         
+        #camera-button.recording {
+            animation: pulse 1.2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 50, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0); }
+        }
+        
+>>>>>>> c6418ca3f9ad5d3d2c4c87a86708aeb61439ea4d
         #status-text {
-            color: white;
+            color: #fffde4;
             font-size: 14px;
             text-align: center;
-            background: rgba(0, 0, 0, 0.7);
+<<<<<<< HEAD
+            background: rgba(0, 0, 0, 0.6);
             padding: 5px 12px;
             border-radius: 20px;
+            backdrop-filter: blur(7px);
+            box-shadow: 0 2px 16px 0 rgba(245,194,66,0.06);
+        }
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(ellipse at 60% 120%, #faf5c7 0%, #f5c242 26%, #fffbe7 60%, #252525 100%);
+            color: #2d2615;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
+            animation: fadeIn 0.5s;
+            transition: opacity 0.5s;
+        }
+        .beer-loader-container {
+            position: relative;
+            width: 100vw;
+            max-width: 350px;
+            height: auto;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .beer-bottle {
+            width: 100%;
+            height: auto;
+            z-index: 3;
+            position: relative;
+            left: 0;
+            top: 0;
+            transform: scale(1);
+            animation: bottleZom 2s infinite cubic-bezier(.77,0,.18,1);
+            object-fit: contain;
+            object-position: center center;
+            max-width: 220px;
+            max-height: 380px;
+            margin: 0 auto;
+            display: block;
+        }
+        @keyframes bottleZom {
+            0% { transform: scale(1) rotate(-1deg);}
+            10% {transform: scale(1.04) rotate(2deg);}
+            22% {transform: scale(1.09) rotate(-2deg);}
+            40% {transform: scale(1.14) rotate(1deg);}
+            60% {transform: scale(1.09) rotate(-1deg);}
+            77% {transform: scale(1.04) rotate(2deg);}
+            100% {transform: scale(1) rotate(-1deg);}
+        }
+        .beer-bubbles {
+            position: absolute;
+            left: 50%;
+            bottom: 16%;
+            width: 80px;
+            height: 200px;
+            pointer-events: none;
+            z-index: 4;
+            transform: translateX(-50%);
+        }
+        .beer-bubble {
+            position: absolute;
+            left: 50%;
+            background: radial-gradient(circle at 40% 30%, #fffde4 60%, #ffe 90%, #f5c24200 100%);
+            opacity: 0.65;
+            border-radius: 50%;
+            animation: bubbleRise 2.2s infinite;
+        }
+        .beer-bubble:nth-child(1) {
+            width: 16px; height: 16px;
+            bottom: 5px; margin-left: -15px;
+            animation-delay: 0.2s;
+        }
+        .beer-bubble:nth-child(2) {
+            width: 12px; height: 12px;
+            bottom: 36px; margin-left: 18px;
+            animation-delay: 0.6s;
+        }
+        .beer-bubble:nth-child(3) {
+            width: 10px; height: 10px;
+            bottom: 54px; margin-left: -22px;
+            animation-delay: 1.1s;
+        }
+        .beer-bubble:nth-child(4) {
+            width: 8px; height: 8px;
+            bottom: 86px; margin-left: 8px;
+            animation-delay: 1.6s;
+        }
+        @keyframes bubbleRise {
+            0% { transform: scale(0.7) translateY(0); opacity: 0.7;}
+            60% { transform: scale(1.2) translateY(-40px); opacity: 0.6;}
+            90% { transform: scale(0.9) translateY(-120px); opacity: 0.3;}
+            100% { transform: scale(0.5) translateY(-200px); opacity: 0;}
+        }
+        .beer-shadow {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 100px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse at center, #d7ae3b 0%, #f5c242 80%, #e7d8a6 100%);
+            opacity: 0.38;
+            transform: translateX(-50%) scaleX(1.2);
+            z-index: 2;
+            filter: blur(1.5px);
+            animation: shadowPulse 2s infinite;
+        }
+        @keyframes shadowPulse {
+            0% { opacity: 0.38; transform: translateX(-50%) scaleX(1.2);}
+            50% { opacity: 0.48; transform: translateX(-50%) scaleX(1.32);}
+            100% { opacity: 0.38; transform: translateX(-50%) scaleX(1.2);}
+        }
+        .glow-effect {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 170px;
+            height: 44px;
+            pointer-events: none;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        .glow-effect .glow {
+            position: absolute;
+            width: 60px; height: 44px;
+            border-radius: 40px;
+            background: radial-gradient(ellipse at 50% 20%, #fffde4 55%, #fffbe7 80%, #fff0 100%);
+            opacity: 0.45;
+            filter: blur(2px);
+            animation: glowMove 2.1s infinite cubic-bezier(.75,0,.21,1);
+        }
+        .glow-effect .glow:nth-child(1) { left: 2px; top: 0; animation-delay: 0.18s;}
+        .glow-effect .glow:nth-child(2) { left: 70px; top: 6px; animation-delay: 0.65s;}
+        @keyframes glowMove {
+            0% { opacity: 0.45; transform: scale(1);}
+            40% { opacity: 0.7; transform: scale(1.14);}
+            80% { opacity: 0.3; transform: scale(0.94);}
+            100% { opacity: 0.45; transform: scale(1);}
+        }
+        #loading-bar-container {
+            margin-top: 30px;
+            width: 90vw;
+            max-width: 260px;
+            background: rgba(255,255,255,0.16);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(245,194,66,0.11);
+            border: 1.5px solid #fff3b0;
+            position: relative;
+        }
+        #loading-bar {
+            height: 16px;
+            width: 0;
+            background: linear-gradient(90deg,#f5c242 0%, #fffde4 100%);
+            border-radius: 20px;
+            transition: width 0.3s cubic-bezier(.77,0,.18,1);
+        }
+        #loading-status {
+            margin-top: 12px;
+            font-size: 16px;
+            color: #6b5a2c;
+            text-shadow: 0 2px 6px #fffce75e;
+        }
+        h1 {
+            margin-top: 0;
+            color: #be9005;
+            font-size: 1.5em;
+            letter-spacing: 1px;
+            font-family: 'Arial Rounded MT Bold', system-ui, sans-serif;
+            text-shadow: 0 2px 12px #fffde4a0;
+        }
+        @keyframes fadeIn {
+            from {opacity:0;}
+            to {opacity:1;}
+        }
+        @media (max-width: 600px) {
+            .beer-loader-container {
+                max-width: 110vw;
+                min-width: 0;
+                width: 100vw;
+                margin-bottom: 18px;
+            }
+            .beer-bottle {
+                max-width: 110px;
+                max-height: 180px;
+            }
+            .beer-shadow {
+                width: 42px;
+                height: 8px;
+            }
+            .beer-bubbles {
+                width: 32px;
+                height: 80px;
+                bottom: 16px;
+            }
+            .glow-effect {
+                width: 70px;
+                height: 18px;
+                top: 0;
+            }
+            .glow-effect .glow {
+                width: 20px; height: 18px;
+                border-radius: 15px;
+            }
+            #loading-bar-container {
+                max-width: 180px;
+            }
+=======
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 20px;
+            border-radius: 20px;
             backdrop-filter: blur(10px);
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Loading screen - Nâng cấp */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c0c2d, #1a1a4a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
+            overflow: hidden;
+        }
+        
+        .loading-content {
+            text-align: center;
+            max-width: 90%;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+            perspective: 1000px;
+        }
+        
+        .logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            animation: 
+                zoomInOut 0.5s infinite alternate ease-in-out, 
+                rotate3d 8s infinite linear;
+            box-shadow: 
+                0 0 30px rgba(255, 50, 80, 0.5),
+                0 0 60px rgba(100, 150, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            transform-style: preserve-3d;
+        }
+
+        /* Hiệu ứng phóng to thu nhỏ */
+        @keyframes zoomInOut {
+            0%, 100% { 
+                transform: scale(1); /* Đặt về kích thước gốc */
+                box-shadow: 
+                    0 0 20px rgba(255, 50, 80, 0.7),
+                    0 0 40px rgba(100, 150, 255, 0.4);
+            }
+            50% { 
+                transform: scale(1.1); /* Phóng to nhẹ */
+                box-shadow: 
+                    0 0 40px rgba(255, 50, 80, 0.9),
+                    0 0 80px rgba(100, 150, 255, 0.6);
+            }
+        }
+        
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 50, 80, 0.7);
+            box-shadow: 0 0 10px #ff3250;
+            animation: float 4s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); opacity: 1; }
+            50% { transform: translate(100px, -50px); opacity: 0.3; }
+        }
+        
+        .loading-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ff3250, #ff7a5c, #ffc46b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(255, 50, 80, 0.3);
+            animation: titlePulse 2s infinite alternate;
+        }
+        
+        @keyframes titlePulse {
+            0% { text-shadow: 0 2px 10px rgba(255, 50, 80, 0.3); }
+            100% { text-shadow: 0 2px 20px rgba(255, 50, 80, 0.6), 0 2px 30px rgba(255, 122, 92, 0.4); }
+        }
+        
+        .loading-subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.8);
+            animation: subtitleFade 3s infinite alternate;
+        }
+        
+        @keyframes subtitleFade {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .loading-bar-container {
+            width: 80%;
+            max-width: 400px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto;
+            box-shadow: 
+                inset 0 1px 3px rgba(0, 0, 0, 0.4),
+                0 0 10px rgba(255, 50, 80, 0.3);
+            position: relative;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #ff3250, #ff7a5c, #ffc46b);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(255, 50, 80, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: loadingShine 1.5s infinite;
+        }
+        
+        @keyframes loadingShine {
+            100% { left: 100%; }
+        }
+        
+        .loading-percentage {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffc46b;
+            text-shadow: 0 0 8px rgba(255, 196, 107, 0.7);
+        }
+        
+        .loading-hint {
+            margin-top: 25px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+        
+        /* Background particles */
+        .background-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Recording timer */
+        #recording-timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 50, 80, 0.9);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(5px);
+            animation: timerPulse 1.5s infinite;
+        }
+        
+        @keyframes timerPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 50, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0); }
+>>>>>>> c6418ca3f9ad5d3d2c4c87a86708aeb61439ea4d
         }
     </style>
 </head>
 <body>
+<<<<<<< HEAD
+    <!-- Loading screen: Beer bottle animation, glow, bubble and progress bar -->
+    <div id="loading-screen">
+        <div class="beer-loader-container">
+            <div class="beer-shadow"></div>
+            <div class="beer-bubbles">
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+                <div class="beer-bubble"></div>
+            </div>
+            <div class="glow-effect">
+                <div class="glow"></div>
+                <div class="glow"></div>
+            </div>
+            <img class="beer-bottle" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" alt="beer bottle" />
+        </div>
+        <h1>Đang tải dữ liệu Sapporo AR...</h1>
+        <div id="loading-bar-container">
+            <div id="loading-bar"></div>
+        </div>
+        <div id="loading-status"></div>
+=======
     <!-- Loading screen -->
-    <div id="loading-screen"
-        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: black; color: white; display: flex; justify-content: center; align-items: center; z-index: 9999;">
-        <h1>Đang tải nội dung...</h1>
+    <div id="loading-screen">
+        <div class="background-particles" id="particles"></div>
+        <div class="loading-content">
+            <h1 class="loading-title">SAPPORO AR EXPERIENCE</h1>
+            <p class="loading-subtitle">Đang khởi tạo ...</p>
+            
+            <div class="logo-container">
+                <img src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" class="logo" alt="Sapporo Logo">
+            </div>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="progress-bar"></div>
+            </div>
+            <div class="loading-percentage" id="progress-text">0%</div>
+            
+            <p class="loading-hint">Hướng camera vào các điểm đánh dấu để khám phá</p>
+        </div>
+>>>>>>> c6418ca3f9ad5d3d2c4c87a86708aeb61439ea4d
     </div>
 
     <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/targets2.mind;"
-        color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+        color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true"
+        vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
         <a-assets>
             <video id="video0" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4" preload="auto"
@@ -96,51 +587,312 @@
         <button id="camera-button"></button>
         <div id="status-text">Nhấn để chụp, giữ để quay video</div>
     </div>
+    
+    <div id="toast"></div>
+    <div id="recording-timer">00:00</div>
 
     <script>
+<<<<<<< HEAD
+let isRecording = false;
+let mediaRecorder;
+let recordedChunks = [];
+let pressTimer;
+
+window.addEventListener("DOMContentLoaded", () => {
+    setupCameraButton();
+    setupLoading();
+});
+
+function setupCameraButton() {
+    const cameraButton = document.getElementById('camera-button');
+    cameraButton.addEventListener('touchstart', startPress);
+    cameraButton.addEventListener('mousedown', startPress);
+    cameraButton.addEventListener('touchend', endPress);
+    cameraButton.addEventListener('mouseup', endPress);
+    cameraButton.addEventListener('mouseleave', cancelPress);
+}
+
+function startPress(e) {
+    e.preventDefault();
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => startRecording(), 500);
+}
+
+function endPress(e) {
+    e.preventDefault();
+    if (pressTimer) {
+        clearTimeout(pressTimer);
+        capturePhoto();
+    } else if (isRecording) {
+        stopRecording();
+    }
+}
+
+function cancelPress() {
+    if (pressTimer) clearTimeout(pressTimer);
+}
+
+// CHỤP ẢNH: Ghép real-camera và AR canvas thành 1 ảnh
+function capturePhoto() {
+    const realCamera = document.getElementById("real-camera-video");
+    const scene = document.querySelector('a-scene');
+    if (!scene || !scene.renderer || !scene.renderer.domElement) {
+        alert("Chưa sẵn sàng, thử lại sau!");
+        return;
+    }
+    const arCanvas = scene.renderer.domElement;
+    const screenshotCanvas = document.getElementById("screenshot-canvas");
+
+    // Đồng bộ kích thước
+    screenshotCanvas.width = arCanvas.width;
+    screenshotCanvas.height = arCanvas.height;
+    const ctx = screenshotCanvas.getContext("2d");
+
+    // 1. Vẽ camera thật (real camera)
+    ctx.drawImage(realCamera, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+    // 2. Vẽ lớp AR (canvas AR)
+    ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+
+    // Xuất file
+    const link = document.createElement("a");
+    link.download = `ar-capture-${Date.now()}.png`;
+    link.href = screenshotCanvas.toDataURL("image/png");
+    link.click();
+}
+
+// QUAY VIDEO: Ghép frame + merge audio AR
+function startRecording() {
+    const realCamera = document.getElementById("real-camera-video");
+    const scene = document.querySelector('a-scene');
+    if (!scene || !scene.renderer || !scene.renderer.domElement) {
+        alert("Chưa sẵn sàng, thử lại sau!");
+        return;
+    }
+    const arCanvas = scene.renderer.domElement;
+
+    // Tạo canvas tạm để vẽ frame ghép
+    const combinedCanvas = document.createElement("canvas");
+    combinedCanvas.width = arCanvas.width;
+    combinedCanvas.height = arCanvas.height;
+    const ctx = combinedCanvas.getContext("2d");
+
+    // Lấy audio từ tất cả video AR đang phát
+    const arVideos = Array.from(document.querySelectorAll('video[id^="video"]'));
+    let audioCtx, dest;
+    let hasAudio = false;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        dest = audioCtx.createMediaStreamDestination();
+        arVideos.forEach(video => {
+            if (!video.paused && !video.muted && video.currentTime > 0) {
+                try {
+                    const vSource = audioCtx.createMediaElementSource(video);
+                    vSource.connect(dest);
+                    hasAudio = true;
+                } catch (e) {}
+            }
+        });
+    } catch (err) {}
+
+    // Ghép hình
+    const videoStream = combinedCanvas.captureStream(30);
+    // Nếu có audio AR thì merge vào
+    let finalStream;
+    if (hasAudio && dest) {
+        const tracks = [...videoStream.getVideoTracks(), ...dest.stream.getAudioTracks()];
+        finalStream = new MediaStream(tracks);
+    } else {
+        finalStream = videoStream;
+    }
+
+    let mimeType = '';
+    if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1.42E01E,mp4a.40.2')) {
+        mimeType = 'video/mp4';
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+        mimeType = 'video/webm';
+    } else {
+        mimeType = '';
+    }
+
+    try {
+        mediaRecorder = new MediaRecorder(finalStream, mimeType ? { mimeType } : undefined);
+    } catch (e) {
+        mediaRecorder = new MediaRecorder(finalStream);
+    }
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+        const type = (mimeType && mimeType.includes('mp4')) ? 'video/mp4' : 'video/webm';
+        const blob = new Blob(recordedChunks, { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ar-record-${Date.now()}.${type === 'video/mp4' ? 'mp4' : 'webm'}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        recordedChunks = [];
+        // Stop audio context
+        if (audioCtx && audioCtx.state !== 'closed') audioCtx.close();
+    };
+
+    function drawFrame() {
+        if (!isRecording) return;
+        ctx.drawImage(realCamera, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
+        requestAnimationFrame(drawFrame);
+    }
+
+    mediaRecorder.start();
+    isRecording = true;
+    drawFrame();
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+    }
+}
+
+// Loading bar setup
+function setupLoading() {
+    const loadingScreen = document.getElementById("loading-screen");
+    const loadingBar = document.getElementById("loading-bar");
+    const loadingStatus = document.getElementById("loading-status");
+
+    // --- Loading Progress ---
+    const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
+    const videos = videoIds.map(id => document.getElementById(id));
+    let videosReady = 0;
+
+    function updateLoadingBar() {
+        const percent = Math.round((videosReady / videos.length) * 100);
+        loadingBar.style.width = percent + "%";
+        loadingStatus.innerText = `Đang tải video ${videosReady} / ${videos.length}`;
+    }
+
+    const onVideoReady = () => {
+        videosReady++;
+        updateLoadingBar();
+        if (videosReady === videos.length) {
+            loadingStatus.innerText = "Hoàn tất! Đang khởi tạo AR...";
+            setTimeout(() => {
+                loadingScreen.style.opacity = 0;
+                setTimeout(() => {
+                    loadingScreen.style.display = "none";
+                }, 400);
+            }, 600);
+            videos.forEach(video => video.muted = false);
+        }
+    };
+
+    videos.forEach((video) => {
+        video.addEventListener('progress', updateLoadingBar);
+        video.addEventListener('canplaythrough', onVideoReady);
+        video.load();
+    });
+
+    updateLoadingBar();
+}
+
+// Real camera setup
+window.addEventListener("DOMContentLoaded", async () => {
+    const video = document.getElementById("real-camera-video");
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" },
+            audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+    } catch (error) {
+        console.error("Lỗi khi truy cập camera:", error);
+    }
+
+    // AR video on target found/lost
+    for (let i = 0; i < 6; i++) {
+        const targetSelector = `a-entity[mindar-image-target="targetIndex: ${i}"]`;
+        const target = document.querySelector(targetSelector);
+        const videoAR = document.getElementById(`video${i}`);
+
+        target.addEventListener('targetFound', () => {
+            videoAR.muted = false;
+            videoAR.currentTime = 0;
+            videoAR.play();
+        });
+        target.addEventListener('targetLost', () => {
+            videoAR.pause();
+            videoAR.currentTime = 0;
+        });
+    }
+});
+=======
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
         let pressTimer;
+        let recordingStartTime;
+        let recordingTimerInterval;
+        const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
 
         window.addEventListener("DOMContentLoaded", async () => {
             const loadingScreen = document.getElementById("loading-screen");
-
-            // Danh sách video IDs
-            const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
-            const videos = videoIds.map(id => document.getElementById(id));
-            let videosReady = 0;
-
-            const onVideoReady = () => {
-                videosReady++;
-                if (videosReady === videos.length) {
-                    loadingScreen.style.display = "none";
-                    videos.forEach(video => video.muted = false);
+            const progressBar = document.getElementById("progress-bar");
+            const progressText = document.getElementById("progress-text");
+            const toast = document.getElementById("toast");
+            const particlesContainer = document.getElementById("particles");
+            
+            // Tạo các hạt nền
+            createParticles(particlesContainer);
+            
+            // Hiển thị tiến trình loading
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 12;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}%`;
+                
+                // Hiệu ứng khi gần hoàn thành
+                if (progress > 85) {
+                    progressBar.style.boxShadow = "0 0 15px rgba(255, 196, 107, 0.8)";
                 }
-            };
-
-            // Load từng video và gắn listener
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = "0";
+                        setTimeout(() => {
+                            loadingScreen.style.display = "none";
+                        }, 800);
+                    }, 500);
+                }
+            }, 200);
+            
+            // Khởi tạo video
+            const videos = videoIds.map(id => document.getElementById(id));
             videos.forEach(video => {
                 video.load();
-                video.addEventListener('canplaythrough', onVideoReady);
+                video.muted = true;
             });
-
+            
             // Khởi tạo camera
             await initializeRealCamera();
-
+            
             // Thiết lập nút camera
             setupCameraButton();
-
+            
             // Thiết lập sự kiện cho các target
             for (let i = 0; i < 6; i++) {
                 const targetSelector = `a-entity[mindar-image-target="targetIndex: ${i}"]`;
                 const target = document.querySelector(targetSelector);
                 const video = document.getElementById(`video${i}`);
-
+                
                 target.addEventListener('targetFound', () => {
                     video.muted = false;
                     video.currentTime = 0;
                     video.play();
+                    showToast(`Đã phát hiện điểm đánh dấu ${i+1}`);
                 });
                 target.addEventListener('targetLost', () => {
                     video.pause();
@@ -148,7 +900,47 @@
                 });
             }
         });
-
+        
+        function createParticles(container) {
+            const colors = ['#ff3250', '#ff7a5c', '#ffc46b', '#4a9cff'];
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Kích thước ngẫu nhiên
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Màu sắc ngẫu nhiên
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                particle.style.boxShadow = `0 0 ${size}px ${color}`;
+                
+                // Vị trí ngẫu nhiên
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Animation delay
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                particle.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.style.opacity = "1";
+            
+            setTimeout(() => {
+                toast.style.opacity = "0";
+            }, 3000);
+        }
+        
         async function initializeRealCamera() {
             const video = document.getElementById("real-camera-video");
             try {
@@ -160,24 +952,30 @@
                 await video.play();
             } catch (error) {
                 console.error("Lỗi khi truy cập camera:", error);
+                showToast("Lỗi: Không thể truy cập camera");
             }
         }
-
+        
         function setupCameraButton() {
             const cameraButton = document.getElementById('camera-button');
+            const statusText = document.getElementById('status-text');
+            
             cameraButton.addEventListener('touchstart', startPress);
             cameraButton.addEventListener('mousedown', startPress);
             cameraButton.addEventListener('touchend', endPress);
             cameraButton.addEventListener('mouseup', endPress);
             cameraButton.addEventListener('mouseleave', cancelPress);
         }
-
+        
         function startPress(e) {
             e.preventDefault();
             if (pressTimer) clearTimeout(pressTimer);
-            pressTimer = setTimeout(() => startRecording(), 500); // Giữ 500ms để quay
+            pressTimer = setTimeout(() => {
+                startRecording();
+                pressTimer = null;
+            }, 500);
         }
-
+        
         function endPress(e) {
             e.preventDefault();
             if (pressTimer) {
@@ -187,80 +985,108 @@
                 stopRecording();
             }
         }
-
+        
         function cancelPress() {
             if (pressTimer) clearTimeout(pressTimer);
         }
-
-        // Helper function to get AR canvas (WebGL) as image
-        function getARCanvasImageData(callback) {
-            // MindAR renders to a-scene's renderer.domElement
+        
+        function capturePhoto() {
             const scene = document.querySelector('a-scene');
-            // Wait for renderer and canvas to be available
-            if (!scene || !scene.renderer || !scene.renderer.domElement) {
-                setTimeout(() => getARCanvasImageData(callback), 100);
+            if (!scene || !scene.renderer) {
+                showToast("Lỗi: Không thể chụp ảnh");
                 return;
             }
-            const arCanvas = scene.renderer.domElement;
-            callback(arCanvas);
+            
+            // Lấy canvas của scene (chứa cả AR và camera thực tế)
+            const canvas = scene.renderer.domElement;
+            const screenshotCanvas = document.getElementById("screenshot-canvas");
+            screenshotCanvas.width = canvas.width;
+            screenshotCanvas.height = canvas.height;
+            
+            const ctx = screenshotCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+            
+            // Tạo liên kết tải xuống
+            const link = document.createElement("a");
+            link.download = `sapporo-ar-${Date.now()}.png`;
+            link.href = screenshotCanvas.toDataURL("image/png");
+            link.click();
+            
+            showToast("Đã chụp ảnh thành công!");
         }
-
-        function capturePhoto() {
-            getARCanvasImageData((arCanvas) => {
-                const screenshotCanvas = document.getElementById("screenshot-canvas");
-                screenshotCanvas.width = arCanvas.width;
-                screenshotCanvas.height = arCanvas.height;
-                const ctx = screenshotCanvas.getContext("2d");
-                // Draw AR canvas directly (contains both real camera and AR video overlays)
-                ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
-
-                const link = document.createElement("a");
-                link.download = `sapporo-ar-${Date.now()}.png`;
-                link.href = screenshotCanvas.toDataURL("image/png");
-                link.click();
-            });
-        }
-
+        
         function startRecording() {
-            getARCanvasImageData((arCanvas) => {
-                const combinedCanvas = document.createElement("canvas");
-                combinedCanvas.width = arCanvas.width;
-                combinedCanvas.height = arCanvas.height;
-                const ctx = combinedCanvas.getContext("2d");
-
-                // Use AR canvas as the source (contains both camera and AR video)
-                const stream = combinedCanvas.captureStream(30);
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
-                mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `record-${Date.now()}.mp4`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    recordedChunks = [];
-                };
-
-                function drawFrame() {
-                    if (!isRecording) return;
-                    ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
-                    requestAnimationFrame(drawFrame);
-                }
-
-                mediaRecorder.start();
-                isRecording = true;
-                drawFrame();
-            });
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
+            if (isRecording) return;
+            
+            const scene = document.querySelector('a-scene');
+            if (!scene || !scene.renderer) {
+                showToast("Lỗi: Không thể quay video");
+                return;
             }
+            
+            const canvas = scene.renderer.domElement;
+            const stream = canvas.captureStream(30);
+            
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9'
+            });
+            
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `sapporo-video-${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showToast("Đã lưu video thành công!");
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            
+            // Cập nhật giao diện
+            document.getElementById('camera-button').classList.add('recording');
+            document.getElementById('status-text').textContent = "Đang quay... Nhấn để dừng";
+            
+            // Hiển thị bộ đếm thời gian
+            const timer = document.getElementById('recording-timer');
+            timer.style.display = "block";
+            recordingStartTime = Date.now();
+            
+            clearInterval(recordingTimerInterval);
+            recordingTimerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - recordingStartTime) / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                timer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }, 1000);
         }
+        
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            isRecording = false;
+            clearInterval(recordingTimerInterval);
+            
+            // Cập nhật giao diện
+            document.getElementById('camera-button').classList.remove('recording');
+            document.getElementById('status-text').textContent = "Nhấn để chụp, giữ để quay video";
+            document.getElementById('recording-timer').style.display = "none";
+        }
+>>>>>>> c6418ca3f9ad5d3d2c4c87a86708aeb61439ea4d
     </script>
 </body>
 </html>
