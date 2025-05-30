@@ -41,7 +41,7 @@
         }
         
         #camera-button.recording {
-            animation: pulse 1.5s infinite;
+            animation: pulse 1.2s infinite;
         }
         
         @keyframes pulse {
@@ -62,7 +62,7 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
-        /* Loading screen */
+        /* Loading screen - Nâng cấp */
         #loading-screen {
             position: fixed;
             top: 0;
@@ -76,11 +76,14 @@
             align-items: center;
             z-index: 9999;
             transition: opacity 0.8s ease;
+            overflow: hidden;
         }
         
         .loading-content {
             text-align: center;
             max-width: 90%;
+            position: relative;
+            z-index: 2;
         }
         
         .logo-container {
@@ -88,6 +91,7 @@
             width: 200px;
             height: 200px;
             margin: 0 auto 30px;
+            perspective: 1000px;
         }
         
         .logo {
@@ -95,30 +99,89 @@
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
-            animation: zoomInOut 3s infinite alternate;
-            box-shadow: 0 0 30px rgba(255, 50, 80, 0.5);
+            animation: 
+                zoomInOut 1.5s infinite alternate ease-in-out, 
+                rotate3d 8s infinite linear,
+                colorShift 12s infinite alternate;
+            box-shadow: 
+                0 0 30px rgba(255, 50, 80, 0.5),
+                0 0 60px rgba(100, 150, 255, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.1);
+            transform-style: preserve-3d;
         }
         
+        /* Hiệu ứng phóng to thu nhỏ nhanh hơn */
         @keyframes zoomInOut {
-            0% { transform: scale(0.95); }
-            100% { transform: scale(1.05); }
+            0%, 100% { 
+                transform: scale(0.85) rotate(0deg); 
+                box-shadow: 
+                    0 0 20px rgba(255, 50, 80, 0.7),
+                    0 0 40px rgba(100, 150, 255, 0.4);
+            }
+            50% { 
+                transform: scale(1.15) rotate(5deg); 
+                box-shadow: 
+                    0 0 40px rgba(255, 50, 80, 0.9),
+                    0 0 80px rgba(100, 150, 255, 0.6);
+            }
+        }
+        
+        /* Hiệu ứng 3D xoay */
+        @keyframes rotate3d {
+            0% { transform: rotateY(0deg) rotateX(0deg); }
+            25% { transform: rotateY(15deg) rotateX(5deg); }
+            50% { transform: rotateY(0deg) rotateX(10deg); }
+            75% { transform: rotateY(-15deg) rotateX(5deg); }
+            100% { transform: rotateY(0deg) rotateX(0deg); }
+        }
+        
+        /* Hiệu ứng chuyển màu */
+        @keyframes colorShift {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 50, 80, 0.7);
+            box-shadow: 0 0 10px #ff3250;
+            animation: float 4s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); opacity: 1; }
+            50% { transform: translate(100px, -50px); opacity: 0.3; }
         }
         
         .loading-title {
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 20px;
-            background: linear-gradient(to right, #ff3250, #ff7a5c);
+            background: linear-gradient(to right, #ff3250, #ff7a5c, #ffc46b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 2px 10px rgba(255, 50, 80, 0.3);
+            animation: titlePulse 2s infinite alternate;
+        }
+        
+        @keyframes titlePulse {
+            0% { text-shadow: 0 2px 10px rgba(255, 50, 80, 0.3); }
+            100% { text-shadow: 0 2px 20px rgba(255, 50, 80, 0.6), 0 2px 30px rgba(255, 122, 92, 0.4); }
         }
         
         .loading-subtitle {
             font-size: 18px;
             margin-bottom: 30px;
             color: rgba(255, 255, 255, 0.8);
+            animation: subtitleFade 3s infinite alternate;
+        }
+        
+        @keyframes subtitleFade {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
         
         .loading-bar-container {
@@ -129,23 +192,44 @@
             border-radius: 10px;
             overflow: hidden;
             margin: 0 auto;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+            box-shadow: 
+                inset 0 1px 3px rgba(0, 0, 0, 0.4),
+                0 0 10px rgba(255, 50, 80, 0.3);
+            position: relative;
         }
         
         .loading-bar {
             height: 100%;
             width: 0%;
-            background: linear-gradient(to right, #ff3250, #ff7a5c);
+            background: linear-gradient(to right, #ff3250, #ff7a5c, #ffc46b);
             border-radius: 10px;
             transition: width 0.5s ease;
             box-shadow: 0 0 10px rgba(255, 50, 80, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: loadingShine 1.5s infinite;
+        }
+        
+        @keyframes loadingShine {
+            100% { left: 100%; }
         }
         
         .loading-percentage {
             margin-top: 15px;
             font-size: 18px;
             font-weight: 600;
-            color: #ff7a5c;
+            color: #ffc46b;
+            text-shadow: 0 0 8px rgba(255, 196, 107, 0.7);
         }
         
         .loading-hint {
@@ -153,6 +237,16 @@
             font-size: 14px;
             color: rgba(255, 255, 255, 0.6);
             font-style: italic;
+        }
+        
+        /* Background particles */
+        .background-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
         }
         
         /* Toast notification */
@@ -186,15 +280,23 @@
             z-index: 1000;
             display: none;
             backdrop-filter: blur(5px);
+            animation: timerPulse 1.5s infinite;
+        }
+        
+        @keyframes timerPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(255, 50, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0); }
         }
     </style>
 </head>
 <body>
     <!-- Loading screen -->
     <div id="loading-screen">
+        <div class="background-particles" id="particles"></div>
         <div class="loading-content">
             <h1 class="loading-title">SAPPORO AR EXPERIENCE</h1>
-            <p class="loading-subtitle">Loading...</p>
+            <p class="loading-subtitle">Đang khởi tạo thực tế ảo tăng cường...</p>
             
             <div class="logo-container">
                 <img src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" class="logo" alt="Sapporo Logo">
@@ -274,14 +376,23 @@
             const progressBar = document.getElementById("progress-bar");
             const progressText = document.getElementById("progress-text");
             const toast = document.getElementById("toast");
+            const particlesContainer = document.getElementById("particles");
+            
+            // Tạo các hạt nền
+            createParticles(particlesContainer);
             
             // Hiển thị tiến trình loading
             let progress = 0;
             const progressInterval = setInterval(() => {
-                progress += Math.random() * 10;
+                progress += Math.random() * 12;
                 if (progress > 100) progress = 100;
                 progressBar.style.width = `${progress}%`;
                 progressText.textContent = `${Math.round(progress)}%`;
+                
+                // Hiệu ứng khi gần hoàn thành
+                if (progress > 85) {
+                    progressBar.style.boxShadow = "0 0 15px rgba(255, 196, 107, 0.8)";
+                }
                 
                 if (progress >= 100) {
                     clearInterval(progressInterval);
@@ -292,7 +403,7 @@
                         }, 800);
                     }, 500);
                 }
-            }, 300);
+            }, 200);
             
             // Khởi tạo video
             const videos = videoIds.map(id => document.getElementById(id));
@@ -325,6 +436,36 @@
                 });
             }
         });
+        
+        function createParticles(container) {
+            const colors = ['#ff3250', '#ff7a5c', '#ffc46b', '#4a9cff'];
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Kích thước ngẫu nhiên
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Màu sắc ngẫu nhiên
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.background = color;
+                particle.style.boxShadow = `0 0 ${size}px ${color}`;
+                
+                // Vị trí ngẫu nhiên
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Animation delay
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                particle.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                
+                container.appendChild(particle);
+            }
+        }
         
         function showToast(message) {
             const toast = document.getElementById("toast");
@@ -424,7 +565,7 @@
             
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'video/webm;codecs=vp9'
+                mimeType: 'video/mp4;codecs=vp9'
             });
             
             mediaRecorder.ondataavailable = e => {
@@ -434,11 +575,11 @@
             };
             
             mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const blob = new Blob(recordedChunks, { type: 'video/mp4' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `sapporo-video-${Date.now()}.webm`;
+                a.download = `sapporo-video-${Date.now()}.mp4`;
                 a.click();
                 URL.revokeObjectURL(url);
                 
@@ -450,7 +591,7 @@
             
             // Cập nhật giao diện
             document.getElementById('camera-button').classList.add('recording');
-            document.getElementById('status-text').textContent = "Đang quay... Nhấn để dừng";
+            document.getElementById('status-text').textContent = "Đang quay... Thả để dừng";
             
             // Hiển thị bộ đếm thời gian
             const timer = document.getElementById('recording-timer');
