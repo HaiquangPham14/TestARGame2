@@ -5,6 +5,16 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
+        /* Reset và base styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: white;
+        }
+        
         #camera-button-container {
             position: fixed;
             bottom: 30px;
@@ -30,23 +40,173 @@
             position: relative;
         }
         
+        #camera-button.recording {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 50, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 50, 80, 0); }
+        }
+        
         #status-text {
             color: white;
             font-size: 14px;
             text-align: center;
             background: rgba(0, 0, 0, 0.7);
-            padding: 5px 12px;
+            padding: 8px 20px;
             border-radius: 20px;
             backdrop-filter: blur(10px);
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Loading screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0c0c2d, #1a1a4a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
+        }
+        
+        .loading-content {
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .logo-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 30px;
+        }
+        
+        .logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            animation: zoomInOut 3s infinite alternate;
+            box-shadow: 0 0 30px rgba(255, 50, 80, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @keyframes zoomInOut {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
+        
+        .loading-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #ff3250, #ff7a5c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(255, 50, 80, 0.3);
+        }
+        
+        .loading-subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .loading-bar-container {
+            width: 80%;
+            max-width: 400px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 auto;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+        
+        .loading-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #ff3250, #ff7a5c);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(255, 50, 80, 0.5);
+        }
+        
+        .loading-percentage {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ff7a5c;
+        }
+        
+        .loading-hint {
+            margin-top: 25px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+        
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Recording timer */
+        #recording-timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 50, 80, 0.9);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
 <body>
     <!-- Loading screen -->
-    <div id="loading-screen"
-        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background-color: black; color: white; display: flex; justify-content: center; align-items: center; z-index: 9999;">
-        <h1>Đang tải nội dung...</h1>
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h1 class="loading-title">SAPPORO AR EXPERIENCE</h1>
+            <p class="loading-subtitle">Loading...</p>
+            
+            <div class="logo-container">
+                <img src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" class="logo" alt="Sapporo Logo">
+            </div>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="progress-bar"></div>
+            </div>
+            <div class="loading-percentage" id="progress-text">0%</div>
+            
+            <p class="loading-hint">Hướng camera vào các điểm đánh dấu để khám phá</p>
+        </div>
     </div>
 
     <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/targets2.mind;"
@@ -96,51 +256,68 @@
         <button id="camera-button"></button>
         <div id="status-text">Nhấn để chụp, giữ để quay video</div>
     </div>
+    
+    <div id="toast"></div>
+    <div id="recording-timer">00:00</div>
 
     <script>
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
         let pressTimer;
+        let recordingStartTime;
+        let recordingTimerInterval;
+        const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
 
         window.addEventListener("DOMContentLoaded", async () => {
             const loadingScreen = document.getElementById("loading-screen");
-
-            // Danh sách video IDs
-            const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
-            const videos = videoIds.map(id => document.getElementById(id));
-            let videosReady = 0;
-
-            const onVideoReady = () => {
-                videosReady++;
-                if (videosReady === videos.length) {
-                    loadingScreen.style.display = "none";
-                    videos.forEach(video => video.muted = false);
+            const progressBar = document.getElementById("progress-bar");
+            const progressText = document.getElementById("progress-text");
+            const toast = document.getElementById("toast");
+            
+            // Hiển thị tiến trình loading
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = "0";
+                        setTimeout(() => {
+                            loadingScreen.style.display = "none";
+                        }, 800);
+                    }, 500);
                 }
-            };
-
-            // Load từng video và gắn listener
+            }, 300);
+            
+            // Khởi tạo video
+            const videos = videoIds.map(id => document.getElementById(id));
             videos.forEach(video => {
                 video.load();
-                video.addEventListener('canplaythrough', onVideoReady);
+                video.muted = true;
             });
-
+            
             // Khởi tạo camera
             await initializeRealCamera();
-
+            
             // Thiết lập nút camera
             setupCameraButton();
-
+            
             // Thiết lập sự kiện cho các target
             for (let i = 0; i < 6; i++) {
                 const targetSelector = `a-entity[mindar-image-target="targetIndex: ${i}"]`;
                 const target = document.querySelector(targetSelector);
                 const video = document.getElementById(`video${i}`);
-
+                
                 target.addEventListener('targetFound', () => {
                     video.muted = false;
                     video.currentTime = 0;
                     video.play();
+                    showToast(`Đã phát hiện điểm đánh dấu ${i+1}`);
                 });
                 target.addEventListener('targetLost', () => {
                     video.pause();
@@ -148,7 +325,17 @@
                 });
             }
         });
-
+        
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.style.opacity = "1";
+            
+            setTimeout(() => {
+                toast.style.opacity = "0";
+            }, 3000);
+        }
+        
         async function initializeRealCamera() {
             const video = document.getElementById("real-camera-video");
             try {
@@ -160,24 +347,30 @@
                 await video.play();
             } catch (error) {
                 console.error("Lỗi khi truy cập camera:", error);
+                showToast("Lỗi: Không thể truy cập camera");
             }
         }
-
+        
         function setupCameraButton() {
             const cameraButton = document.getElementById('camera-button');
+            const statusText = document.getElementById('status-text');
+            
             cameraButton.addEventListener('touchstart', startPress);
             cameraButton.addEventListener('mousedown', startPress);
             cameraButton.addEventListener('touchend', endPress);
             cameraButton.addEventListener('mouseup', endPress);
             cameraButton.addEventListener('mouseleave', cancelPress);
         }
-
+        
         function startPress(e) {
             e.preventDefault();
             if (pressTimer) clearTimeout(pressTimer);
-            pressTimer = setTimeout(() => startRecording(), 500); // Giữ 500ms để quay
+            pressTimer = setTimeout(() => {
+                startRecording();
+                pressTimer = null;
+            }, 500);
         }
-
+        
         function endPress(e) {
             e.preventDefault();
             if (pressTimer) {
@@ -187,79 +380,106 @@
                 stopRecording();
             }
         }
-
+        
         function cancelPress() {
             if (pressTimer) clearTimeout(pressTimer);
         }
-
-        // Helper function to get AR canvas (WebGL) as image
-        function getARCanvasImageData(callback) {
-            // MindAR renders to a-scene's renderer.domElement
+        
+        function capturePhoto() {
             const scene = document.querySelector('a-scene');
-            // Wait for renderer and canvas to be available
-            if (!scene || !scene.renderer || !scene.renderer.domElement) {
-                setTimeout(() => getARCanvasImageData(callback), 100);
+            if (!scene || !scene.renderer) {
+                showToast("Lỗi: Không thể chụp ảnh");
                 return;
             }
-            const arCanvas = scene.renderer.domElement;
-            callback(arCanvas);
+            
+            // Lấy canvas của scene (chứa cả AR và camera thực tế)
+            const canvas = scene.renderer.domElement;
+            const screenshotCanvas = document.getElementById("screenshot-canvas");
+            screenshotCanvas.width = canvas.width;
+            screenshotCanvas.height = canvas.height;
+            
+            const ctx = screenshotCanvas.getContext("2d");
+            ctx.drawImage(canvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+            
+            // Tạo liên kết tải xuống
+            const link = document.createElement("a");
+            link.download = `sapporo-ar-${Date.now()}.png`;
+            link.href = screenshotCanvas.toDataURL("image/png");
+            link.click();
+            
+            showToast("Đã chụp ảnh thành công!");
         }
-
-        function capturePhoto() {
-            getARCanvasImageData((arCanvas) => {
-                const screenshotCanvas = document.getElementById("screenshot-canvas");
-                screenshotCanvas.width = arCanvas.width;
-                screenshotCanvas.height = arCanvas.height;
-                const ctx = screenshotCanvas.getContext("2d");
-                // Draw AR canvas directly (contains both real camera and AR video overlays)
-                ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
-
-                const link = document.createElement("a");
-                link.download = `sapporo-ar-${Date.now()}.png`;
-                link.href = screenshotCanvas.toDataURL("image/png");
-                link.click();
-            });
-        }
-
+        
         function startRecording() {
-            getARCanvasImageData((arCanvas) => {
-                const combinedCanvas = document.createElement("canvas");
-                combinedCanvas.width = arCanvas.width;
-                combinedCanvas.height = arCanvas.height;
-                const ctx = combinedCanvas.getContext("2d");
-
-                // Use AR canvas as the source (contains both camera and AR video)
-                const stream = combinedCanvas.captureStream(30);
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
-                mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `record-${Date.now()}.mp4`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    recordedChunks = [];
-                };
-
-                function drawFrame() {
-                    if (!isRecording) return;
-                    ctx.drawImage(arCanvas, 0, 0, combinedCanvas.width, combinedCanvas.height);
-                    requestAnimationFrame(drawFrame);
-                }
-
-                mediaRecorder.start();
-                isRecording = true;
-                drawFrame();
-            });
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
+            if (isRecording) return;
+            
+            const scene = document.querySelector('a-scene');
+            if (!scene || !scene.renderer) {
+                showToast("Lỗi: Không thể quay video");
+                return;
             }
+            
+            const canvas = scene.renderer.domElement;
+            const stream = canvas.captureStream(30);
+            
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9'
+            });
+            
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `sapporo-video-${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showToast("Đã lưu video thành công!");
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            
+            // Cập nhật giao diện
+            document.getElementById('camera-button').classList.add('recording');
+            document.getElementById('status-text').textContent = "Đang quay... Nhấn để dừng";
+            
+            // Hiển thị bộ đếm thời gian
+            const timer = document.getElementById('recording-timer');
+            timer.style.display = "block";
+            recordingStartTime = Date.now();
+            
+            clearInterval(recordingTimerInterval);
+            recordingTimerInterval = setInterval(() => {
+                const seconds = Math.floor((Date.now() - recordingStartTime) / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                timer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            isRecording = false;
+            clearInterval(recordingTimerInterval);
+            
+            // Cập nhật giao diện
+            document.getElementById('camera-button').classList.remove('recording');
+            document.getElementById('status-text').textContent = "Nhấn để chụp, giữ để quay video";
+            document.getElementById('recording-timer').style.display = "none";
         }
     </script>
 </body>
