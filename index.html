@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
@@ -12,7 +13,7 @@
             overflow: hidden;
             font-family: 'Arial', sans-serif;
         }
-        
+
         #loading-screen {
             position: fixed;
             top: 0;
@@ -27,7 +28,7 @@
             z-index: 9999;
             overflow: hidden;
         }
-        
+
         #particles-js {
             position: absolute;
             width: 100%;
@@ -35,7 +36,7 @@
             top: 0;
             left: 0;
         }
-        
+
         .loading-content {
             position: relative;
             z-index: 2;
@@ -48,21 +49,21 @@
             padding: 20px;
             text-align: center;
         }
-        
+
         .logo-container {
             width: 150px;
             height: 150px;
             margin-bottom: 30px;
             position: relative;
         }
-        
+
         .logo {
             width: 100%;
             height: 100%;
             object-fit: contain;
             animation: pulse 2s infinite ease-in-out;
         }
-        
+
         .loading-title {
             color: #f5c242;
             font-size: 24px;
@@ -70,14 +71,14 @@
             margin-bottom: 10px;
             text-shadow: 0 2px 10px rgba(245, 194, 66, 0.5);
         }
-        
+
         .loading-subtitle {
             color: #ffffff;
             font-size: 16px;
             margin-bottom: 30px;
             opacity: 0.8;
         }
-        
+
         .progress-container {
             width: 80%;
             max-width: 300px;
@@ -87,7 +88,7 @@
             overflow: hidden;
             margin-bottom: 20px;
         }
-        
+
         .progress-bar {
             height: 100%;
             width: 0;
@@ -96,13 +97,13 @@
             transition: width 0.3s ease;
             box-shadow: 0 0 10px rgba(245, 194, 66, 0.5);
         }
-        
+
         .loading-percentage {
             color: #ffffff;
             font-size: 14px;
             font-weight: bold;
         }
-        
+
         /* QUAN TRỌNG: CSS cho nút camera bị thiếu */
         #camera-button-container {
             position: fixed;
@@ -115,7 +116,7 @@
             align-items: center;
             gap: 15px;
         }
-        
+
         #camera-button {
             width: 70px;
             height: 70px;
@@ -128,12 +129,12 @@
             transition: all 0.2s ease;
             position: relative;
         }
-        
+
         #camera-button.recording {
             box-shadow: 0 0 0 4px #ff0000;
             background: rgba(255, 0, 0, 0.2);
         }
-        
+
         #status-text {
             color: #fffde4;
             font-size: 14px;
@@ -142,14 +143,21 @@
             padding: 5px 12px;
             border-radius: 20px;
             backdrop-filter: blur(7px);
-            box-shadow: 0 2px 16px 0 rgba(245,194,66,0.06);
+            box-shadow: 0 2px 16px 0 rgba(245, 194, 66, 0.06);
         }
-        
+
         @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
         }
-        
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .logo-container {
@@ -157,52 +165,53 @@
                 height: 120px;
                 margin-bottom: 20px;
             }
-            
+
             .loading-title {
                 font-size: 20px;
             }
-            
+
             .loading-subtitle {
                 font-size: 14px;
             }
-            
+
             #camera-button {
                 width: 60px;
                 height: 60px;
             }
         }
-        
+
         @media (max-width: 480px) {
             .logo-container {
                 width: 100px;
                 height: 100px;
                 margin-bottom: 15px;
             }
-            
+
             .loading-title {
                 font-size: 18px;
             }
-            
+
             .loading-subtitle {
                 font-size: 12px;
                 margin-bottom: 20px;
             }
-            
+
             .progress-container {
                 height: 4px;
             }
-            
+
             #camera-button {
                 width: 50px;
                 height: 50px;
             }
-            
+
             #status-text {
                 font-size: 12px;
             }
         }
     </style>
 </head>
+
 <body>
     <!-- Loading screen: Beer bottle animation, glow, bubble and progress bar -->
     <!-- <div id="loading-screen">
@@ -230,37 +239,37 @@
         <div id="particles-js"></div>
         <div class="loading-content">
             <div class="logo-container">
-                <img class="logo" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" alt="Sapporo Logo">
+                <img class="logo" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png"
+                    alt="Sapporo Logo">
             </div>
-            
+
             <h1 class="loading-title">Sapporo AR Experience</h1>
             <p class="loading-subtitle">Đang khởi tạo thực tế ảo...</p>
-            
+
             <div class="progress-container">
                 <div id="loading-bar" class="progress-bar"></div>
             </div>
-            
+
             <div id="loading-status" class="loading-percentage">0%</div>
         </div>
     </div>
-    
+
     <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/targets2.mind;"
         color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; preserveDrawingBuffer: true"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false">
+        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
-            <video id="video0" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
-            <video id="video1" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo2.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
-            <video id="video2" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo3.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
-            <video id="video3" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo4.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
-            <video id="video4" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo5.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
-            <video id="video5" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo6.mp4" preload="auto"
-                crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video0" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video1" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo2.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video2" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo3.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video3" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo4.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video4" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo5.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
+            <video id="video5" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo6.mp4"
+                preload="auto" crossorigin="anonymous" webkit-playsinline playsinline loop></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -294,247 +303,270 @@
     </div>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
-    let isRecording = false;
-    let mediaRecorder;
-    let recordedChunks = [];
-    let pressTimer;
-    let arScene;
-    let activeVideos = new Set();
+        let isRecording = false;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let pressTimer;
+        let arScene;
+        let activeVideos = new Set();
 
-    // Initialize app
-    document.addEventListener("DOMContentLoaded", function() {
-        particlesJS('particles-js', {
-            "particles": {
-                "number": {
-                    "value": 80,
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#f5c242"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    }
-                },
-                "opacity": {
-                    "value": 0.5,
-                    "random": true,
-                    "anim": {
-                        "enable": true,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": true,
-                        "speed": 2,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#f5c242",
-                    "opacity": 0.3,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 1,
-                    "direction": "none",
-                    "random": true,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": true,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "grab"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 140,
-                        "line_linked": {
-                            "opacity": 0.8
+        // Initialize app
+        document.addEventListener("DOMContentLoaded", function () {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 80,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
                         }
                     },
-                    "push": {
-                        "particles_nb": 4
+                    "color": {
+                        "value": "#f5c242"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 2,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#f5c242",
+                        "opacity": 0.3,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 1,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                        "attract": {
+                            "enable": true,
+                            "rotateX": 600,
+                            "rotateY": 1200
+                        }
                     }
-                }
-            },
-            "retina_detect": true
-        });
-        
-        // Phần script loading giữ nguyên, chỉ cập nhật hàm setupLoading()
-        setupCameraButton();
-        setupLoading();
-        setupARScene();
-        setupRealCamera();
-    });
-    //
-    // document.addEventListener("DOMContentLoaded", () => {
-    //     setupCameraButton();
-    //     setupLoading();
-    //     setupARScene();
-    //     setupRealCamera();
-    // });
-
-    function setupCameraButton() {
-        const btn = document.getElementById('camera-button');
-        const statusText = document.getElementById('status-text');
-        
-        // Touch and mouse events
-        btn.addEventListener('touchstart', handlePressStart);
-        btn.addEventListener('mousedown', handlePressStart);
-        btn.addEventListener('touchend', handlePressEnd);
-        btn.addEventListener('mouseup', handlePressEnd);
-        btn.addEventListener('touchcancel', handlePressCancel);
-        btn.addEventListener('mouseleave', handlePressCancel);
-
-        function handlePressStart(e) {
-            e.preventDefault();
-            if (isRecording) return;
-            
-            pressTimer = setTimeout(() => {
-                startRecording();
-                btn.classList.add('recording');
-                statusText.textContent = 'Đang quay... Nhả để dừng';
-                pressTimer = null;
-            }, 500);
-        }
-
-        function handlePressEnd(e) {
-            e.preventDefault();
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-                capturePhoto();
-            } else if (isRecording) {
-                stopRecording();
-                btn.classList.remove('recording');
-                statusText.textContent = 'Nhấn để chụp, giữ để quay video';
-            }
-        }
-
-        function handlePressCancel() {
-            if (pressTimer) {
-                clearTimeout(pressTimer);
-                pressTimer = null;
-            }
-        }
-    }
-
-    function setupARScene() {
-        arScene = document.querySelector('a-scene');
-        
-        // Wait for scene to be ready
-        arScene.addEventListener('loaded', () => {
-            console.log('AR Scene loaded');
-            setupTargetEvents();
-        });
-    }
-
-    function setupTargetEvents() {
-        // Setup target found/lost events for each video
-        for (let i = 0; i < 6; i++) {
-            const target = document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`);
-            const video = document.getElementById(`video${i}`);
-            
-            if (target && video) {
-                target.addEventListener('targetFound', () => {
-                    console.log(`Target ${i} found`);
-                    video.currentTime = 0;
-                    video.muted = false;
-                    video.play().catch(e => console.log('Play error:', e));
-                    activeVideos.add(video);
-                });
-                
-                target.addEventListener('targetLost', () => {
-                    console.log(`Target ${i} lost`);
-                    video.pause();
-                    video.currentTime = 0;
-                    video.muted = true;
-                    activeVideos.delete(video);
-                });
-            }
-        }
-    }
-
-    async function setupRealCamera() {
-        const video = document.getElementById("real-camera-video");
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" },
-                audio: false
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 0.8
+                            }
+                        },
+                        "push": {
+                            "particles_nb": 4
+                        }
+                    }
+                },
+                "retina_detect": true
             });
-            video.srcObject = stream;
-            await video.play();
-            console.log('Real camera initialized');
-        } catch (error) {
-            console.error("Error accessing camera:", error);
-            alert("Không thể truy cập camera: " + error.message);
-        }
-    }
 
-    function capturePhoto() {
-        const realCamera = document.getElementById("real-camera-video");
-        const screenshotCanvas = document.getElementById("screenshot-canvas");
-        if (!arScene || !arScene.renderer || !arScene.renderer.domElement || !realCamera.videoWidth) {
-            alert("Chưa sẵn sàng, thử lại sau!");
-            return;
-        }
-        const arCanvas = arScene.renderer.domElement;
-
-        requestAnimationFrame(() => {
-            // Set canvas size to match AR canvas
-            screenshotCanvas.width = arCanvas.width;
-            screenshotCanvas.height = arCanvas.height;
-            const ctx = screenshotCanvas.getContext('2d');
-
-            // Draw the real camera feed as background
-            ctx.drawImage(realCamera, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
-            // Draw the AR content on top
-            ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
-
-            // Download the image
-            const link = document.createElement('a');
-            link.download = `sapporo-ar-${Date.now()}.png`;
-            link.href = screenshotCanvas.toDataURL('image/png');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            document.body.style.opacity = '0.8';
-            setTimeout(() => document.body.style.opacity = '1', 100);
+            // Phần script loading giữ nguyên, chỉ cập nhật hàm setupLoading()
+            setupCameraButton();
+            setupLoading();
+            setupARScene();
+            setupRealCamera();
         });
-    }
+        //
+        // document.addEventListener("DOMContentLoaded", () => {
+        //     setupCameraButton();
+        //     setupLoading();
+        //     setupARScene();
+        //     setupRealCamera();
+        // });
+
+        function setupCameraButton() {
+            const btn = document.getElementById('camera-button');
+            const statusText = document.getElementById('status-text');
+
+            // Touch and mouse events
+            btn.addEventListener('touchstart', handlePressStart);
+            btn.addEventListener('mousedown', handlePressStart);
+            btn.addEventListener('touchend', handlePressEnd);
+            btn.addEventListener('mouseup', handlePressEnd);
+            btn.addEventListener('touchcancel', handlePressCancel);
+            btn.addEventListener('mouseleave', handlePressCancel);
+
+            function handlePressStart(e) {
+                e.preventDefault();
+                if (isRecording) return;
+
+                pressTimer = setTimeout(() => {
+                    startRecording();
+                    btn.classList.add('recording');
+                    statusText.textContent = 'Đang quay... Nhả để dừng';
+                    pressTimer = null;
+                }, 500);
+            }
+
+            function handlePressEnd(e) {
+                e.preventDefault();
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                    capturePhoto();
+                } else if (isRecording) {
+                    stopRecording();
+                    btn.classList.remove('recording');
+                    statusText.textContent = 'Nhấn để chụp, giữ để quay video';
+                }
+            }
+
+            function handlePressCancel() {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            }
+        }
+
+        function setupARScene() {
+            arScene = document.querySelector('a-scene');
+
+            // Wait for scene to be ready
+            arScene.addEventListener('loaded', () => {
+                console.log('AR Scene loaded');
+                setupTargetEvents();
+            });
+        }
+        window.addEventListener("DOMContentLoaded", () => {
+            const loadingScreen = document.getElementById("loading-screen");
+
+            // Danh sách video IDs
+            const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
+            const videos = videoIds.map(id => document.getElementById(id));
+            let videosReady = 0;
+
+            const onVideoReady = () => {
+                videosReady++;
+                if (videosReady === videos.length) {
+                    loadingScreen.style.display = "none";
+                    videos.forEach(video => {
+                        video.muted = true;
+                        video.play().catch(() => { });
+                    });
+                }
+            };
+
+            videos.forEach(video => {
+                video.load();
+                video.addEventListener('canplaythrough', onVideoReady);
+            });
+        });
+        function setupTargetEvents() {
+            // Setup target found/lost events for each video
+            for (let i = 0; i < 6; i++) {
+                const target = document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`);
+                const video = document.getElementById(`video${i}`);
+
+                if (target && video) {
+                    target.addEventListener('targetFound', () => {
+                        console.log(`Target ${i} found`);
+                        video.currentTime = 0;
+                        video.muted = false;
+                        video.play().catch(e => console.log('Play error:', e));
+                        activeVideos.add(video);
+                    });
+
+                    target.addEventListener('targetLost', () => {
+                        console.log(`Target ${i} lost`);
+                        video.pause();
+                        video.currentTime = 0;
+                        video.muted = true;
+                        activeVideos.delete(video);
+                    });
+                }
+            }
+        }
+
+        async function setupRealCamera() {
+            const video = document.getElementById("real-camera-video");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                    audio: false
+                });
+                video.srcObject = stream;
+                await video.play();
+                console.log('Real camera initialized');
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+                alert("Không thể truy cập camera: " + error.message);
+            }
+        }
+
+        function capturePhoto() {
+            const realCamera = document.getElementById("real-camera-video");
+            const screenshotCanvas = document.getElementById("screenshot-canvas");
+            if (!arScene || !arScene.renderer || !arScene.renderer.domElement || !realCamera.videoWidth) {
+                alert("Chưa sẵn sàng, thử lại sau!");
+                return;
+            }
+            const arCanvas = arScene.renderer.domElement;
+
+            requestAnimationFrame(() => {
+                // Set canvas size to match AR canvas
+                screenshotCanvas.width = arCanvas.width;
+                screenshotCanvas.height = arCanvas.height;
+                const ctx = screenshotCanvas.getContext('2d');
+
+                // Draw the real camera feed as background
+                ctx.drawImage(realCamera, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+                // Draw the AR content on top
+                ctx.drawImage(arCanvas, 0, 0, screenshotCanvas.width, screenshotCanvas.height);
+
+                // Download the image
+                const link = document.createElement('a');
+                link.download = `sapporo-ar-${Date.now()}.png`;
+                link.href = screenshotCanvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                document.body.style.opacity = '0.8';
+                setTimeout(() => document.body.style.opacity = '1', 100);
+            });
+        }
 
         const videoAudioSources = new Map();
 
@@ -569,8 +601,8 @@
                 if (!video.paused && !video.muted) {
                     try {
                         const src = getOrCreateMediaSourceFor(video, audioContext);
-                        src.connect(destination);              
-                        src.connect(audioContext.destination); 
+                        src.connect(destination);
+                        src.connect(audioContext.destination);
                         hasAudio = true;
                     } catch (e) {
                         console.log('Audio connection error:', e);
@@ -646,79 +678,80 @@
             }
         }
 
-    function dataURLtoBlob(dataURL) {
-        const byteString = atob(dataURL.split(',')[1]);
-        const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        return new Blob([ab], { type: mimeString });
-    }
-
-    function saveFile(blob, filename) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-    }    
-
-    function setupLoading() {
-        const loadingScreen = document.getElementById('loading-screen');
-        const loadingBar = document.getElementById('loading-bar');
-        const loadingStatus = document.getElementById('loading-status');
-        
-        const videos = [
-            document.getElementById('video0'),
-            document.getElementById('video1'),
-            document.getElementById('video2'),
-            document.getElementById('video3'),
-            document.getElementById('video4'),
-            document.getElementById('video5')
-        ];
-        
-        let loadedCount = 0;
-        const totalVideos = videos.length;
-        
-        function updateProgress() {
-            const progress = (loadedCount / totalVideos) * 100;
-            loadingBar.style.width = `${progress}%`;
-            loadingStatus.textContent = `${loadedCount}/6`;
-            
-            if (loadedCount === totalVideos) {
-                setTimeout(() => {
-                    loadingStatus.textContent = 'Hoàn tất! Đang khởi tạo AR...';
-                    setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                        }, 500);
-                    }, 800);
-                }, 500);
+        function dataURLtoBlob(dataURL) {
+            const byteString = atob(dataURL.split(',')[1]);
+            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
             }
+            return new Blob([ab], { type: mimeString });
         }
-        
-        videos.forEach((video, index) => {
-            const onCanPlay = () => {
-                loadedCount++;
-                updateProgress();
-                //video.removeEventListener('canplaythrough', onCanPlay);
-            };
-            
-            video.addEventListener('canplaythrough', onCanPlay);
-            video.addEventListener('error', (e) => {
-                console.error(`Video ${index} load error:`, e);
-                loadedCount++;
-                updateProgress();
+
+        function saveFile(blob, filename) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        function setupLoading() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const loadingBar = document.getElementById('loading-bar');
+            const loadingStatus = document.getElementById('loading-status');
+
+            const videos = [
+                document.getElementById('video0'),
+                document.getElementById('video1'),
+                document.getElementById('video2'),
+                document.getElementById('video3'),
+                document.getElementById('video4'),
+                document.getElementById('video5')
+            ];
+
+            let loadedCount = 0;
+            const totalVideos = videos.length;
+
+            function updateProgress() {
+                const progress = (loadedCount / totalVideos) * 100;
+                loadingBar.style.width = `${progress}%`;
+                loadingStatus.textContent = `${loadedCount}/6`;
+
+                if (loadedCount === totalVideos) {
+                    setTimeout(() => {
+                        loadingStatus.textContent = 'Hoàn tất! Đang khởi tạo AR...';
+                        setTimeout(() => {
+                            loadingScreen.style.opacity = '0';
+                            setTimeout(() => {
+                                loadingScreen.style.display = 'none';
+                            }, 500);
+                        }, 800);
+                    }, 500);
+                }
+            }
+
+            videos.forEach((video, index) => {
+                const onCanPlay = () => {
+                    loadedCount++;
+                    updateProgress();
+                    video.removeEventListener('canplaythrough', onCanPlay);
+                };
+
+                video.addEventListener('canplaythrough', onCanPlay);
+                video.addEventListener('error', (e) => {
+                    console.error(`Video ${index} load error:`, e);
+                    loadedCount++;
+                    updateProgress();
+                });
+
+                // Start loading
+                video.load();
             });
-            
-            // Start loading
-            video.load();
-        });
-        
-        updateProgress();
-    }
+
+            updateProgress();
+        }
     </script>
 </body>
+
 </html>
