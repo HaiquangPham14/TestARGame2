@@ -400,30 +400,6 @@
                 },
                 "retina_detect": true
             });
-            //
-            const loadingScreen = document.getElementById("loading-screen");
-
-            // Danh sách video IDs
-            const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
-            const videos = videoIds.map(id => document.getElementById(id));
-            let videosReady = 0;
-
-            const onVideoReady = () => {
-                videosReady++;
-                if (videosReady === videos.length) {
-                    loadingScreen.style.display = "none";
-                    videos.forEach(video => {
-                        video.muted = true;
-                        video.play().catch(() => { });
-                    });
-                }
-            };
-
-            videos.forEach(video => {
-                video.load();
-                video.addEventListener('canplaythrough', onVideoReady);
-            });
-            //
             // Phần script loading giữ nguyên, chỉ cập nhật hàm setupLoading()
             setupCameraButton();
             setupLoading();
@@ -492,32 +468,7 @@
                 setupTargetEvents();
             });
         }
-        ///////////////////////////////////////////////////////////
-        // window.addEventListener("DOMContentLoaded", () => {
-        //     const loadingScreen = document.getElementById("loading-screen");
 
-        //     // Danh sách video IDs
-        //     const videoIds = ["video0", "video1", "video2", "video3", "video4", "video5"];
-        //     const videos = videoIds.map(id => document.getElementById(id));
-        //     let videosReady = 0;
-
-        //     const onVideoReady = () => {
-        //         videosReady++;
-        //         if (videosReady === videos.length) {
-        //             loadingScreen.style.display = "none";
-        //             videos.forEach(video => {
-        //                 video.muted = true;
-        //                 video.play().catch(() => { });
-        //             });
-        //         }
-        //     };
-
-        //     videos.forEach(video => {
-        //         video.load();
-        //         video.addEventListener('canplaythrough', onVideoReady);
-        //     });
-        // });
-        ////////////////////////////////////////////////
         function setupTargetEvents() {
             // Setup target found/lost events for each video
             for (let i = 0; i < 6; i++) {
@@ -771,6 +722,7 @@
                 });
 
                 // Start loading
+                video.preload = 'auto';
                 video.load();
             });
 
