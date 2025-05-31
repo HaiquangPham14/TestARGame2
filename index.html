@@ -610,14 +610,16 @@
                 const outType = options.mimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
                 const ext = outType === 'video/mp4' ? 'mp4' : 'webm';
                 const blob = new Blob(recordedChunks, { type: outType });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `sapporo-ar-${Date.now()}.${ext}`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
+                const filename = `sapporo-video-${Date.now()}.${ext}`;
+                saveFile(blob, filename);
+                // const url = URL.createObjectURL(blob);
+                // const link = document.createElement('a');
+                // link.href = url;
+                // link.download = `sapporo-ar-${Date.now()}.${ext}`;
+                // document.body.appendChild(link);
+                // link.click();
+                // document.body.removeChild(link);
+                // URL.revokeObjectURL(url);
                 recordedChunks = [];
                 if (audioContext && audioContext.state !== 'closed') audioContext.close();
             };
@@ -643,6 +645,24 @@
                 isRecording = false;
             }
         }
+
+    function dataURLtoBlob(dataURL) {
+        const byteString = atob(dataURL.split(',')[1]);
+        const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+    }
+
+    function saveFile(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }    
 
     function setupLoading() {
         const loadingScreen = document.getElementById('loading-screen');
