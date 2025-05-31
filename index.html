@@ -700,14 +700,10 @@
         }
         
         videos.forEach((video, index) => {
-            video.preload = "auto";
-            video.muted = true;
-            video.playsInline = true;
-            
             const onCanPlay = () => {
                 loadedCount++;
                 updateProgress();
-                video.removeEventListener('canplaythrough', onCanPlay);
+                //video.removeEventListener('canplaythrough', onCanPlay);
             };
             
             video.addEventListener('canplaythrough', onCanPlay);
@@ -717,13 +713,12 @@
                 updateProgress();
             });
             
-            // Thay đổi cách load video
+            // Start loading
             video.load();
-            video.play().then(() => video.pause()).catch(e => console.log("Initial play failed (expected):", e));
         });
         
         updateProgress();
-        }
+    }
     </script>
 </body>
 </html>
