@@ -102,9 +102,60 @@
             color: #ffffff;
             font-size: 14px;
             font-weight: bold;
+            margin-bottom: 10px;
         }
 
-        /* QUAN TRỌNG: CSS cho nút camera bị thiếu */
+        .video-status-container {
+            width: 90%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .video-status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .video-status-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-status-text {
+            color: #fff;
+            font-size: 12px;
+            flex-grow: 1;
+        }
+
+        .video-progress {
+            width: 100px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+
+        .video-progress-bar {
+            height: 100%;
+            width: 0;
+            background: #f5c242;
+            transition: width 0.3s ease;
+        }
+
         #camera-button-container {
             position: fixed;
             bottom: 30px;
@@ -208,33 +259,15 @@
             #status-text {
                 font-size: 12px;
             }
+
+            .video-status-container {
+                max-height: 150px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Loading screen: Beer bottle animation, glow, bubble and progress bar -->
-    <!-- <div id="loading-screen">
-        <div class="beer-loader-container">
-            <div class="beer-shadow"></div>
-            <div class="beer-bubbles">
-                <div class="beer-bubble"></div>
-                <div class="beer-bubble"></div>
-                <div class="beer-bubble"></div>
-                <div class="beer-bubble"></div>
-            </div>
-            <div class="glow-effect">
-                <div class="glow"></div>
-                <div class="glow"></div>
-            </div>
-            <img class="beer-bottle" src="https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Intro.png" alt="beer bottle" />
-        </div>
-        <h1>Đang tải dữ liệu Sapporo AR...</h1>
-        <div id="loading-bar-container">
-            <div id="loading-bar"></div>
-        </div>
-        <div id="loading-status"></div>
-    </div> -->
     <div id="loading-screen">
         <div id="particles-js"></div>
         <div class="loading-content">
@@ -244,13 +277,17 @@
             </div>
 
             <h1 class="loading-title">Sapporo AR Experience</h1>
-            <p class="loading-subtitle">Đang khởi tạo thực tế ảo...</p>
+            <p class="loading-subtitle">Đang tải dữ liệu video...</p>
 
             <div class="progress-container">
                 <div id="loading-bar" class="progress-bar"></div>
             </div>
 
             <div id="loading-status" class="loading-percentage">0%</div>
+
+            <div class="video-status-container" id="video-status-container">
+                <!-- Video status items will be added here -->
+            </div>
         </div>
     </div>
 
@@ -309,6 +346,7 @@
         let pressTimer;
         let arScene;
         let activeVideos = new Set();
+        let videoStatus = {};
 
         // Initialize app
         document.addEventListener("DOMContentLoaded", function () {
@@ -400,19 +438,12 @@
                 },
                 "retina_detect": true
             });
-            // Phần script loading giữ nguyên, chỉ cập nhật hàm setupLoading()
+
             setupCameraButton();
             setupLoading();
             setupARScene();
             setupRealCamera();
         });
-        //
-        // document.addEventListener("DOMContentLoaded", () => {
-        //     setupCameraButton();
-        //     setupLoading();
-        //     setupARScene();
-        //     setupRealCamera();
-        // });
 
         function setupCameraButton() {
             const btn = document.getElementById('camera-button');
@@ -620,14 +651,6 @@
                 const blob = new Blob(recordedChunks, { type: outType });
                 const filename = `sapporo-video-${Date.now()}.${ext}`;
                 saveFile(blob, filename);
-                // const url = URL.createObjectURL(blob);
-                // const link = document.createElement('a');
-                // link.href = url;
-                // link.download = `sapporo-ar-${Date.now()}.${ext}`;
-                // document.body.appendChild(link);
-                // link.click();
-                // document.body.removeChild(link);
-                // URL.revokeObjectURL(url);
                 recordedChunks = [];
                 if (audioContext && audioContext.state !== 'closed') audioContext.close();
             };
@@ -654,17 +677,6 @@
             }
         }
 
-        function dataURLtoBlob(dataURL) {
-            const byteString = atob(dataURL.split(',')[1]);
-            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], { type: mimeString });
-        }
-
         function saveFile(blob, filename) {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -672,27 +684,70 @@
             link.click();
         }
 
+        // CẢI TIẾN QUAN TRỌNG: Tối ưu hóa quá trình tải video
         function setupLoading() {
             const loadingScreen = document.getElementById('loading-screen');
             const loadingBar = document.getElementById('loading-bar');
             const loadingStatus = document.getElementById('loading-status');
+            const videoStatusContainer = document.getElementById('video-status-container');
 
             const videos = [
-                document.getElementById('video0', preload = 'auto'),
-                document.getElementById('video1', preload = 'auto'),
-                document.getElementById('video2', preload = 'auto'),
-                document.getElementById('video3', preload = 'auto'),
-                document.getElementById('video4', preload = 'auto'),
-                document.getElementById('video5', preload = 'auto')
+                document.getElementById('video0'),
+                document.getElementById('video1'),
+                document.getElementById('video2'),
+                document.getElementById('video3'),
+                document.getElementById('video4'),
+                document.getElementById('video5')
             ];
 
             let loadedCount = 0;
             const totalVideos = videos.length;
 
+            // Tạo các phần tử hiển thị trạng thái cho từng video
+            videos.forEach((video, index) => {
+                const statusId = `video-status-${index}`;
+                const progressId = `video-progress-${index}`;
+
+                const statusItem = document.createElement('div');
+                statusItem.className = 'video-status-item';
+                statusItem.id = statusId;
+
+                const statusIcon = document.createElement('div');
+                statusIcon.className = 'video-status-icon';
+                statusIcon.innerHTML = '⏳'; // Icon đồng hồ cát
+
+                const statusText = document.createElement('div');
+                statusText.className = 'video-status-text';
+                statusText.textContent = `Video ${index + 1}: Đang tải...`;
+
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'video-progress';
+
+                const progressBar = document.createElement('div');
+                progressBar.className = 'video-progress-bar';
+                progressBar.id = progressId;
+
+                progressContainer.appendChild(progressBar);
+                statusItem.appendChild(statusIcon);
+                statusItem.appendChild(statusText);
+                statusItem.appendChild(progressContainer);
+                videoStatusContainer.appendChild(statusItem);
+
+                // Lưu trạng thái video
+                videoStatus[index] = {
+                    loaded: false,
+                    progress: 0,
+                    element: statusItem,
+                    icon: statusIcon,
+                    text: statusText,
+                    progressBar: progressBar
+                };
+            });
+
             function updateProgress() {
-                const progress = (loadedCount / totalVideos) * 100;
+                const progress = Math.round((loadedCount / totalVideos) * 100);
                 loadingBar.style.width = `${progress}%`;
-                loadingStatus.textContent = `${loadedCount}/6`;
+                loadingStatus.textContent = `${progress}%`;
 
                 if (loadedCount === totalVideos) {
                     setTimeout(() => {
@@ -701,6 +756,10 @@
                             loadingScreen.style.opacity = '0';
                             setTimeout(() => {
                                 loadingScreen.style.display = 'none';
+                                // Đảm bảo tất cả video đã sẵn sàng để phát
+                                videos.forEach(video => {
+                                    video.muted = true;
+                                });
                             }, 500);
                         }, 800);
                     }, 500);
@@ -708,20 +767,68 @@
             }
 
             videos.forEach((video, index) => {
-                const onCanPlay = () => {
-                    loadedCount++;
-                    updateProgress();
-                    video.removeEventListener('canplaythrough', onCanPlay);
+                // Bắt buộc tải video
+                video.load();
+
+                // Kiểm tra tiến trình tải
+                const updateProgressBar = () => {
+                    try {
+                        if (video.buffered.length > 0 && video.duration > 0) {
+                            const buffered = video.buffered.end(video.buffered.length - 1);
+                            const progress = Math.min(100, (buffered / video.duration) * 100);
+
+                            videoStatus[index].progressBar.style.width = `${progress}%`;
+                            videoStatus[index].text.textContent = `Video ${index + 1}: ${Math.round(progress)}%`;
+                        }
+                    } catch (e) {
+                        console.error(`Error updating progress for video ${index}:`, e);
+                    }
                 };
 
-                video.addEventListener('canplaythrough', onCanPlay);
-                video.addEventListener('error', (e) => {
-                    console.error(`Video ${index} load error:`, e);
-                    loadedCount++;
-                    updateProgress();
+                // Sự kiện khi có dữ liệu mới được tải
+                video.addEventListener('progress', updateProgressBar);
+
+                // Sự kiện khi video đã tải đủ dữ liệu để phát
+                video.addEventListener('canplaythrough', () => {
+                    if (!videoStatus[index].loaded) {
+                        videoStatus[index].loaded = true;
+                        videoStatus[index].icon.innerHTML = '✅'; // Icon thành công
+                        videoStatus[index].text.textContent = `Video ${index + 1}: Hoàn thành`;
+                        loadedCount++;
+                        updateProgress();
+                    }
                 });
 
-                // Start loading
+                // Sự kiện khi video đã tải xong toàn bộ
+                video.addEventListener('loadeddata', () => {
+                    videoStatus[index].progressBar.style.width = '100%';
+                    videoStatus[index].text.textContent = `Video ${index + 1}: Hoàn thành`;
+                    if (!videoStatus[index].loaded) {
+                        videoStatus[index].loaded = true;
+                        videoStatus[index].icon.innerHTML = '✅';
+                        loadedCount++;
+                        updateProgress();
+                    }
+                });
+
+                // Xử lý lỗi tải video
+                video.addEventListener('error', (e) => {
+                    console.error(`Video ${index} load error:`, e);
+                    videoStatus[index].icon.innerHTML = '❌'; // Icon lỗi
+                    videoStatus[index].text.textContent = `Video ${index + 1}: Lỗi tải!`;
+                    videoStatus[index].progressBar.style.backgroundColor = '#ff0000';
+
+                    // Thử tải lại sau 2 giây
+                    setTimeout(() => {
+                        videoStatus[index].icon.innerHTML = '🔄';
+                        videoStatus[index].text.textContent = `Video ${index + 1}: Đang thử lại...`;
+                        videoStatus[index].progressBar.style.backgroundColor = '#f5c242';
+                        videoStatus[index].progressBar.style.width = '0%';
+                        video.load();
+                    }, 2000);
+                });
+
+                // Bắt đầu tải video
                 video.load();
             });
 
