@@ -678,12 +678,12 @@
             const loadingStatus = document.getElementById('loading-status');
 
             const videos = [
-                document.getElementById('video0'),
-                document.getElementById('video1'),
-                document.getElementById('video2'),
-                document.getElementById('video3'),
-                document.getElementById('video4'),
-                document.getElementById('video5')
+                document.getElementById('video0', preload = 'auto'),
+                document.getElementById('video1', preload = 'auto'),
+                document.getElementById('video2', preload = 'auto'),
+                document.getElementById('video3', preload = 'auto'),
+                document.getElementById('video4', preload = 'auto'),
+                document.getElementById('video5', preload = 'auto')
             ];
 
             let loadedCount = 0;
@@ -722,7 +722,6 @@
                 });
 
                 // Start loading
-                video.preload = 'auto';
                 video.load();
             });
 
