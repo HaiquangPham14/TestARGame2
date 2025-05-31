@@ -294,104 +294,6 @@
     </div>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script>
-    (function() {
-        const CACHE_NAME = 'sapporo-ar-v2';
-        const VIDEO_URLS = [
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo1.mp4',
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo2.mp4',
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo3.mp4',
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo4.mp4',
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo5.mp4',
-            'https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo6.mp4'
-        ];
-
-        // Inline Service Worker
-        function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                const swUrl = URL.createObjectURL(new Blob([
-                    `self.addEventListener('install', (event) => {
-                        event.waitUntil(
-                            caches.open('${CACHE_NAME}').then((cache) => {
-                                return cache.addAll(${JSON.stringify(VIDEO_URLS)}.map(url => new Request(url, {
-                                    credentials: 'same-origin',
-                                    mode: 'no-cors'
-                                })));
-                        });
-                        
-                    self.addEventListener('fetch', (event) => {
-                        if (${JSON.stringify(VIDEO_URLS)}.some(url => event.request.url.includes(url))) {
-                            event.respondWith(
-                                caches.open('${CACHE_NAME}').then(cache => {
-                                    return cache.match(event.request).then(response => {
-                                        return response || fetch(event.request).then(networkResponse => {
-                                            if (networkResponse.ok) {
-                                                cache.put(event.request, networkResponse.clone());
-                                            }
-                                            return networkResponse;
-                                        });
-                                    });
-                                })
-                            );
-                        }
-                    });
-                    
-                    self.addEventListener('activate', (event) => {
-                        event.waitUntil(
-                            caches.keys().then(cacheNames => {
-                                return Promise.all(
-                                    cacheNames.map(cacheName => {
-                                        if (cacheName !== '${CACHE_NAME}') {
-                                            return caches.delete(cacheName);
-                                        }
-                                    })
-                                );
-                            })
-                        );
-                    });`
-                ], { type: 'application/javascript' }));
-
-                navigator.serviceWorker.register(swUrl)
-                    .then(registration => {
-                        console.log('ServiceWorker registered');
-                        URL.revokeObjectURL(swUrl);
-                    })
-                    .catch(err => {
-                        console.error('ServiceWorker registration failed:', err);
-                        URL.revokeObjectURL(swUrl);
-                    });
-            }
-        }
-
-        // Video Cache Loader
-        class VideoCacheLoader {
-            constructor() {
-                this.cacheSupported = 'caches' in window;
-            }
-
-            async loadVideo(videoElement, url) {
-                if (this.cacheSupported) {
-                    try {
-                        const cache = await caches.open(CACHE_NAME);
-                        const cachedResponse = await cache.match(url);
-                        
-                        if (cachedResponse) {
-                            const blob = await cachedResponse.blob();
-                            videoElement.src = URL.createObjectURL(blob);
-                            return true;
-                        }
-                    } catch (e) {
-                        console.error('Cache access error:', e);
-                    }
-                }
-                
-                videoElement.src = url;
-                return false;
-            }
-        }
-
-        window.videoCacheLoader = new VideoCacheLoader();
-        registerServiceWorker();
-    })();
     let isRecording = false;
     let mediaRecorder;
     let recordedChunks = [];
@@ -796,62 +698,32 @@
                 }, 500);
             }
         }
-        async function loadVideoWithCache(video, index) {
-            const videoUrl = `https://cdn.jsdelivr.net/gh/HaiquangPham14/TestARGame2@main/Sapporo${index+1}.mp4`;
+        
+        videos.forEach((video, index) => {
+            video.preload = "auto";
+            video.muted = true;
+            video.playsInline = true;
             
-            // Thử tải từ cache trước
-            const fromCache = await videoCacheLoader.loadVideo(video, videoUrl);
-            
-            // Sự kiện khi video sẵn sàng
-            const onReady = () => {
+            const onCanPlay = () => {
                 loadedCount++;
                 updateProgress();
-                video.removeEventListener('canplaythrough', onReady);
-                video.removeEventListener('error', onError);
+                video.removeEventListener('canplaythrough', onCanPlay);
             };
             
-            const onError = (e) => {
+            video.addEventListener('canplaythrough', onCanPlay);
+            video.addEventListener('error', (e) => {
                 console.error(`Video ${index} load error:`, e);
                 loadedCount++;
                 updateProgress();
-                video.removeEventListener('canplaythrough', onReady);
-                video.removeEventListener('error', onError);
-            };
+            });
             
-            video.addEventListener('canplaythrough', onReady, { once: true });
-            video.addEventListener('error', onError, { once: true });
-            
-            // Kích hoạt tải nếu chưa có trong cache
-            if (!fromCache) {
-                video.load();
-                video.currentTime = 0.1; // Kích hoạt tải thực sự
-            }
-        }
-        
-        // Bắt đầu tải tất cả video
-        videos.forEach((video, index) => {
-            loadVideoWithCache(video, index);
+            // Thay đổi cách load video
+            video.load();
+            video.play().then(() => video.pause()).catch(e => console.log("Initial play failed (expected):", e));
         });
-        // videos.forEach((video, index) => {
-        //     const onCanPlay = () => {
-        //         loadedCount++;
-        //         updateProgress();
-        //         video.removeEventListener('canplaythrough', onCanPlay);
-        //     };
-            
-        //     video.addEventListener('canplaythrough', onCanPlay);
-        //     video.addEventListener('error', (e) => {
-        //         console.error(`Video ${index} load error:`, e);
-        //         loadedCount++;
-        //         updateProgress();
-        //     });
-            
-        //     // Start loading
-        //     video.load();
-        // });
         
         updateProgress();
-    }
+        }
     </script>
 </body>
 </html>
